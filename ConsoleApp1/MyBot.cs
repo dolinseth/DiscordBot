@@ -15,6 +15,7 @@ using NAudio.CoreAudioApi;
 using VideoLibrary;
 using EmergenceGuardian;
 using System.Diagnostics;
+using YoutubeExtractor;
 
 namespace ConsoleApp1
 {
@@ -870,7 +871,7 @@ None";
                     await e.Channel.SendMessage(e.Server.Id.ToString());
                 });
 
-            /*commandList.Add("play");
+            //commandList.Add("play");
             commands.CreateCommand("play")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -890,19 +891,24 @@ None";
                     }
                     else
                     {
-                        /*var youTube = YouTube.Default; // starting point for YouTube actions
-                        var video = youTube.GetVideo(arg); // gets a Video object with info about the video
-                        
-                        File.WriteAllBytes(@"C:\users\Seth Dolin\Desktop\PhysicsBot\Music\Song.mp3", song.GetBytes());
-                        System.Threading.Thread.Sleep(5000);---------------------------------------------------------------PUT THE * / HERE
+                        //when you fix this, remember to uncomment the commandList.Add thing at the top
+                        string filePath = @"C:\users\Seth Dolin\Desktop\Physicsbot\Music\Song.mp3";
+                        IEnumerable<VideoInfo> videoInfos = DownloadUrlResolver.GetDownloadUrls(arg);
+                        VideoInfo video = videoInfos.First();
+                        var audioDownloader = new AudioDownloader(video, filePath);
+                        await e.Channel.SendMessage("Got to point 1");
+                        audioDownloader.DownloadProgressChanged += (sender, args) => Console.WriteLine(args.ProgressPercentage * 0.85);
+                        audioDownloader.AudioExtractionProgressChanged += (sender, args) => Console.WriteLine(85 + args.ProgressPercentage * 0.15);
+                        await e.Channel.SendMessage("Got to point 2");
+                        //completes the download just fine, can't seem to extract for some reason
+                        audioDownloader.Execute();
 
-                        string filePath = @"C:\users\Seth Dolin\Downloads\ThereGoesMyHero.mp3";
                         var voiceChannel = e.User.VoiceChannel;
                         await discord.GetService<AudioService>().Join(voiceChannel);
                         var _vClient = e.Server.GetAudioClient();
                         await _vClient.Join(voiceChannel);
 
-                        /*var channelCount = discord.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
+                        var channelCount = discord.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
                         var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
                         using (var MP3Reader = new Mp3FileReader(filePath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
                         using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
@@ -922,39 +928,12 @@ None";
                                 }
                                 _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
                             }
-                        }--------------------------------------------------------------------------------------------------PUT THE * / HERE
-                        var process = Process.Start(new ProcessStartInfo
-                        { // FFmpeg requires us to spawn a process and hook into its stdout, so we will create a Process
-                            FileName = @"C:\user\Seth Dolin\Documents\Visual Studio 2017\Projects\ConsoleApp1\packages\ffmpeg-20170411-f1d80bc-win64-static\bin\ffmpeg.exe",
-                            Arguments = $"-i {arg} " + // Here we provide a list of arguments to feed into FFmpeg. -i means the location of the file/URL it will read from
-                       "-f s16le -ar 48000 -ac 2 pipe:1", // Next, we tell it to output 16-bit 48000Hz PCM, over 2 channels, to stdout.
-                            UseShellExecute = false,
-                            RedirectStandardOutput = true // Capture the stdout of the process
-                        });
-                        await e.Channel.SendMessage("Got to point 1");
-                        System.Threading.Thread.Sleep(2000); // Sleep for a few seconds to FFmpeg can start processing data.
-
-                        int blockSize = 3840; // The size of bytes to read per frame; 1920 for mono
-                        byte[] buffer = new byte[blockSize];
-                        int byteCount;
-
-                        while (true) // Loop forever, so data will always be read
-                        {
-                            byteCount = process.StandardOutput.BaseStream // Access the underlying MemoryStream from the stdout of FFmpeg
-                                    .Read(buffer, 0, blockSize); // Read stdout into the buffer
-
-                            if (byteCount == 0) // FFmpeg did not output anything
-                                break; // Break out of the while(true) loop, since there was nothing to read.
-
-                            _vClient.Send(buffer, 0, byteCount); // Send our data to Discord
                         }
-                        _vClient.Wait(); // Wait for the Voice Client to finish sending data, as ffMPEG may have already finished buffering out a song, and it is unsafe to return now.
-
 
                         System.Threading.Thread.Sleep(5000);
                         await discord.GetService<AudioService>().Leave(e.Server);
                     }
-                });*/
+                });
                 
             commands.CreateCommand("help")
                 .Do(async (e) =>
@@ -1046,118 +1025,193 @@ None";
             int yChangeAbs = Math.Abs(yChange);
             bool isLegal = false;
 
-            //pawns
-            if (piece == '1' || piece == '7')
+            //checks if the final square is blank or of the opposing team. If it is not, the move is illegal, otherwise, it continues with the legality checker
+            if (((piece == '1' || piece == '2' || piece == '3' || piece == '4' || piece == '5' || piece == '6') && (isBlackOrBlank(board[newX, newY]))) || (piece == '7' || piece == '8' || piece == '9' || piece == 'a' || piece == 'b' || piece == 'c') && (isWhiteOrBlank(board[newX, newY])))
             {
-                if (yChange == ((piece == '1') ? 1 : -1) || (yChange == ((piece == '1') ? 2 : -2) && oldY == ((piece == '1') ? 6 : 1)))
+                //pawns
+                if (piece == '1' || piece == '7')
                 {
-                    if (xChangeAbs == 0 || (board[newX, newY] != '0' && xChangeAbs == 1 && yChangeAbs == 1))
+                    if (yChange == ((piece == '1') ? 1 : -1) || (yChange == ((piece == '1') ? 2 : -2) && oldY == ((piece == '1') ? 6 : 1)))
+                    {
+                        if (xChangeAbs == 0 || (board[newX, newY] != '0' && xChangeAbs == 1 && yChangeAbs == 1))
+                        {
+                            isLegal = true;
+                        }
+                    }
+                    return isLegal;
+                }
+
+                //rooks
+                else if (piece == '2' || piece == '8')
+                {
+                    if (xChangeAbs == 0)
+                    {
+                        isLegal = true;
+                        if (yChange > 0)
+                        {
+                            for (int i = 1; i < (yChangeAbs); i++)
+                            {
+                                if (board[oldX, oldY + i] != '0')
+                                {
+                                    isLegal = false;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 1; i < (yChangeAbs); i++)
+                            {
+                                //if (piece == '2')
+                                //{
+                                if (board[oldX, oldY - i] != '0')
+                                {
+                                    isLegal = false;
+                                }
+                                //}
+                                /*else
+                                {
+                                    if (board[oldX, oldY - i] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
+                                }*/
+                            }
+                        }
+                    }
+                    else if (yChangeAbs == 0)
+                    {
+                        isLegal = true;
+                        if (xChange > 0)
+                        {
+                            for (int i = 1; i < (xChangeAbs); i++)
+                            {
+                                if (board[oldX + i, oldY] != '0')
+                                {
+                                    isLegal = false;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 1; i < (xChangeAbs); i++)
+                            {
+                                if (board[oldX - i, oldY] != '0')
+                                {
+                                    isLegal = false;
+                                }
+                            }
+                        }
+                    }
+                    return isLegal;
+                }
+
+                //knights
+                else if (piece == '3' || piece == '9')
+                {
+                    if ((yChangeAbs == 1 && xChangeAbs == 2) || (yChangeAbs == 2 && xChangeAbs == 1))
                     {
                         isLegal = true;
                     }
+                    return isLegal;
                 }
-                return isLegal;
-            }
 
-            //rooks
-            else if (piece == '2' || piece == '8')
-            {
-                if (xChangeAbs == 0)
+                //bishops
+                else if (piece == '4' || piece == 'a')
                 {
-                    isLegal = true;
-                    if (yChange > 0)
+                    if (yChangeAbs == xChangeAbs)
                     {
-                        for (int i = 1; i < (yChangeAbs + 1); i++)
+                        isLegal = true;
+                        if (yChange > 0)
                         {
-                            if (board[oldX, oldY + i] != '0')
+                            if (xChange > 0)
                             {
-                                isLegal = false;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 1; i < (yChangeAbs + 1); i++)
-                        {
-                            //if (piece == '2')
-                            //{
-                                if (board[oldX, oldY - i] != '0')
+                                for (int i = 1; i < (yChangeAbs); i++)
                                 {
-                                    isLegal = false;
+                                    if (board[oldX + i, oldY + i] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
                                 }
-                            //}
-                            /*else
+                            }
+                            else
                             {
-                                if (board[oldX, oldY - i] != '0')
+                                for (int i = 1; i < (yChangeAbs); i++)
                                 {
-                                    isLegal = false;
+                                    if (board[oldX - i, oldY + i] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
                                 }
-                            }*/
+                            }
                         }
-                    }
-                }
-                else if (yChangeAbs == 0)
-                {
-                    isLegal = true;
-                    if (xChange > 0)
-                    {
-                        for (int i = 1; i < (xChangeAbs + 1); i++)
+                        else
                         {
-                            if (board[oldX + i, oldY] != '0')
+                            if (xChange > 0)
                             {
-                                isLegal = false;
+                                for (int i = 1; i < (yChangeAbs); i++)
+                                {
+                                    if (board[oldX + i, oldY - i] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                for (int i = 1; i < (yChangeAbs); i++)
+                                {
+                                    if (board[oldX - i, oldY - i] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
+                                }
                             }
                         }
                     }
-                    else
-                    {
-                        for (int i = 1; i < (xChangeAbs + 1); i++)
-                        {
-                            if (board[oldX - i, oldY] != '0')
-                            {
-                                isLegal = false;
-                            }
-                        }
-                    }
+                    return isLegal;
                 }
-                return isLegal;
-            }
 
-            //knights
-            else if (piece == '3' || piece == '9')
-            {
-                if ((yChangeAbs == 1 && xChangeAbs == 2) || (yChangeAbs == 2 && xChangeAbs == 1))
+                //kings
+                else if (piece == '5' || piece == 'b')
                 {
-                    isLegal = true;
+                    if (yChangeAbs <= 1 && xChangeAbs <= 1)
+                    {
+                        isLegal = true;
+                    }
+                    return isLegal;
                 }
-                return isLegal;
-            }
 
-            //bishops
-            else if (piece == '4' || piece == 'a')
-            {
-                if (yChangeAbs == xChangeAbs)
+                //queens
+                //has been done stupidly, and needs to be completely rewritten
+                //it should only have one for loop, because otherwise, it checks unnecessary squares
+                else if (piece == '6' || piece == 'c')
                 {
                     isLegal = true;
                     if (yChange > 0)
                     {
                         if (xChange > 0)
                         {
-                            for (int i = 1; i < (yChangeAbs + 1); i++)
+                            for (int i = 1; i < (yChangeAbs); i++)
                             {
-                                if (board[oldX + i, oldY + i] != '0')
+                                for (int j = 1; j < (xChangeAbs); j++)
                                 {
-                                    isLegal = false;
+                                    if (board[oldX + j, oldY + i] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
                                 }
                             }
                         }
                         else
                         {
-                            for (int i = 1; i < (yChangeAbs + 1); i++)
+                            for (int i = 1; i < (yChangeAbs); i++)
                             {
-                                if (board[oldX - i, oldY + i] != '0')
+                                for (int j = 1; j < (xChangeAbs); j++)
                                 {
-                                    isLegal = false;
+                                    if (board[oldX - j, oldY + i] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
                                 }
                             }
                         }
@@ -1166,106 +1220,68 @@ None";
                     {
                         if (xChange > 0)
                         {
-                            for (int i = 1; i < (yChangeAbs + 1); i++)
+                            for (int i = 1; i < (yChangeAbs); i++)
                             {
-                                if (board[oldX + i, oldY - i] != '0')
+                                for (int j = 1; j < (xChangeAbs); j++)
                                 {
-                                    isLegal = false;
+                                    if (board[oldX + j, oldY - i] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
                                 }
                             }
                         }
                         else
                         {
-                            for (int i = 1; i < (yChangeAbs + 1); i++)
+                            for (int i = 1; i < (yChangeAbs); i++)
                             {
-                                if (board[oldX - i, oldY - i] != '0')
+                                for (int j = 1; j < (xChangeAbs); j++)
                                 {
-                                    isLegal = false;
+                                    if (board[oldX - j, oldY - i] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
                                 }
                             }
                         }
                     }
+                    return isLegal;
                 }
-                return isLegal;
-            }
 
-            //kings
-            else if (piece == '5' || piece == 'b')
-            {
-                if(yChangeAbs <= 1 && xChangeAbs <= 1)
-                {
-                    isLegal = true;
-                }
-                return isLegal;
-            }
-
-            //queens
-            else if (piece == '6' || piece == 'c')
-            {
-                isLegal = true;
-                if (yChange > 0)
-                {
-                    if (xChange > 0)
-                    {
-                        for (int i = 1; i < (yChangeAbs + 1); i++)
-                        {
-                            for (int j = 1; j < (xChangeAbs + 1); j++)
-                            {
-                                if (board[oldX + j, oldY + i] != '0')
-                                {
-                                    isLegal = false;
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 1; i < (yChangeAbs + 1); i++)
-                        {
-                            for (int j = 1; j < (xChangeAbs + 1); j++)
-                            {
-                                if (board[oldX - j, oldY + i] != '0')
-                                {
-                                    isLegal = false;
-                                }
-                            }
-                        }
-                    }
-                }
+                //default, because Visual Studio won't let me compile because not all code paths return a value
                 else
                 {
-                    if (xChange > 0)
-                    {
-                        for (int i = 1; i < (yChangeAbs + 1); i++)
-                        {
-                            for (int j = 1; j < (xChangeAbs + 1); j++)
-                            {
-                                if (board[oldX + j, oldY - i] != '0')
-                                {
-                                    isLegal = false;
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 1; i < (yChangeAbs + 1); i++)
-                        {
-                            for (int j = 1; j < (xChangeAbs + 1); j++)
-                            {
-                                if (board[oldX - j, oldY - i] != '0')
-                                {
-                                    isLegal = false;
-                                }
-                            }
-                        }
-                    }
+                    return isLegal;
                 }
-                return isLegal;
             }
+            //Another default, because Visual Studio won't let me compile because not all code paths return a value
             else
             {
                 return isLegal;
+            }
+        }
+
+        private bool isWhiteOrBlank(char piece)
+        {
+            if (piece == '0' || piece == '1' || piece == '2' || piece == '3' || piece == '4' || piece == '5' || piece == '6')
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private bool isBlackOrBlank(char piece)
+        {
+            if (piece == '0' || piece == '7' || piece == '8' || piece == '9' || piece == 'a' || piece == 'b' || piece == 'c')
+            {
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
