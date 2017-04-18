@@ -100,53 +100,6 @@ Can only be used in the verification channel";
                     }
                 });
 
-
-            //not working for some reason
-            /*
-            commandList.Add("purge");
-            commands.CreateCommand("purge")
-                .Parameter("param", ParameterType.Unparsed)
-                .Do(async (e) =>
-                {
-                    string desc = @"**Description:**
-Purges the specified number of messages from the channel and resends the link to the whiteboard app
-
-**Arguments:**
-`NumberOfMessages` - The number of messages to be purged. Defaults to 99 for rate limit reasons
-
-**Restrictions:**
-Can only be used on help group channels in the AP Physics server";
-                   
-                        int NumberOfMessages = 0;
-                        if (e.GetArg("NumberOfMessages") == "")
-                        {
-                            NumberOfMessages = 99;
-                        }
-                        if (e.GetArg("NumberOfMessages") == "help")
-                        {
-                            await e.Channel.SendMessage(desc);
-                        }
-                        else if (Int32.TryParse(e.GetArg("NumberOfMessages"), out NumberOfMessages) || e.GetArg("NumberOfMessages") == "")
-                        {
-
-                            if (e.Channel.Name.Contains("helpgroup") == true)
-                            {
-                                Message[] messagesToDelete;
-                                messagesToDelete = await e.Channel.DownloadMessages(NumberOfMessages + 1);
-                                await e.Channel.DeleteMessages(messagesToDelete);
-                                await e.Channel.SendMessage("The whiteboard app can be found at https://awwapp.com/");
-                            }
-                            else
-                            {
-                                await e.Channel.SendMessage("This is not a help group channel, and cannot be purged");
-                            }
-                        }
-                        else
-                        {
-                            await e.Channel.SendMessage("That's not a valid number");
-                        }
-                });*/
-
             commandList.Add("purge");
             commands.CreateCommand("purge")
                 .Parameter("NumberOfMessages", ParameterType.Unparsed)
@@ -765,6 +718,7 @@ None";
                             await e.Channel.SendMessage("**Board: **" + boardName + @"
 " + BoardToString1(boardName, e.Server.Id.ToString()));
                             await e.Channel.SendMessage(BoardToString2(boardName, e.Server.Id.ToString()));
+                            await e.Channel.SendMessage("It is now `" + (isWhitesTurn(boardName) ? "white's" : "black's") + "` turn");
                         }
                         else if (action == "move")
                         {
@@ -781,7 +735,7 @@ None";
                             int newX = newCoord[0];
                             int newY = newCoord[1];
 
-                            if (isLegal(square1, square2, board[oldX, oldY], board))
+                            if (isLegal(square1, square2, board[oldX, oldY], board, isWhitesTurn(boardName)))
                             {
                                 if (board[newX, newY] == '5')
                                 {
@@ -795,11 +749,12 @@ None";
                                 {
                                     board[newX, newY] = board[oldX, oldY];
                                     board[oldX, oldY] = '0';
-                                    SaveBoard(boardName, board);
+                                    SaveBoard(boardName, board, !isWhitesTurn(boardName));
                                 }
                                 await e.Channel.SendMessage("**Board: **" + boardName + @"
 " + BoardToString1(boardName, e.Server.Id.ToString()));
                                 await e.Channel.SendMessage(BoardToString2(boardName, e.Server.Id.ToString()));
+                                await e.Channel.SendMessage("It is now `" + (isWhitesTurn(boardName) ? "white's" : "black's") + "` turn");
                             }
                             else
                             {
@@ -821,7 +776,7 @@ None";
                             int newX = newCoord[0];
                             int newY = newCoord[1];
 
-                            if (isLegal(square1, square2, board[oldX, oldY], board))
+                            if (isLegal(square1, square2, board[oldX, oldY], board, isWhitesTurn(boardName)))
                             {
                                 if (board[newX, newY] == '5')
                                 {
@@ -829,6 +784,7 @@ None";
 **Final Board: **" + boardName + @"
 " + BoardToString1(boardName, e.Server.Id.ToString()));
                                     await e.Channel.SendMessage(BoardToString2(boardName, e.Server.Id.ToString()));
+                                    await e.Channel.SendMessage("It is now `" + (isWhitesTurn(boardName) ? "white's" : "black's") + "` turn");
                                     DeleteBoard(boardName);
                                 }
                                 else if (board[newX, newY] == 'b')
@@ -837,7 +793,7 @@ None";
 **Final Board: **" + boardName + @"
 " + BoardToString1(boardName, e.Server.Id.ToString()));
                                     await e.Channel.SendMessage(BoardToString2(boardName, e.Server.Id.ToString()));
-                                    //PayBets(boardName, whiteWon);
+                                    await e.Channel.SendMessage("It is now `" + (isWhitesTurn(boardName) ? "white's" : "black's") + "` turn");
                                     DeleteBoard(boardName);
                                 }
                             }
@@ -954,6 +910,31 @@ None";
 			});
 		}
 
+        private bool isWhitesTurn(string boardName)
+        {
+            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
+            StreamReader sr = new StreamReader(FileAddress);
+            string line = "";
+            int lineNumber = 1;
+
+            line = sr.ReadLine();
+            while (!line.Contains(boardName))
+            {
+                line = sr.ReadLine();
+                lineNumber++;
+            }
+            sr.Close();
+
+            if (line.Contains(":1"))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         private int[] parseChessLocation(string square)
         {
             int row = Int32.Parse(square.Substring(1, 1)) - 1;
@@ -992,8 +973,7 @@ None";
             return result;
         }
 
-
-        private bool isLegal(string square1, string square2, char piece, char[,] board)
+        private bool isLegal(string square1, string square2, char piece, char[,] board, bool isWhitesTurn)
         {
             /*pieces will be converted to and from integers as follows:
             0 = empty space
@@ -1025,138 +1005,161 @@ None";
             int yChangeAbs = Math.Abs(yChange);
             bool isLegal = false;
 
-            //checks if the final square is blank or of the opposing team. If it is not, the move is illegal, otherwise, it continues with the legality checker
-            if (((piece == '1' || piece == '2' || piece == '3' || piece == '4' || piece == '5' || piece == '6') && (isBlackOrBlank(board[newX, newY]))) || (piece == '7' || piece == '8' || piece == '9' || piece == 'a' || piece == 'b' || piece == 'c') && (isWhiteOrBlank(board[newX, newY])))
+            if ((isWhitesTurn && isWhiteOrBlank(board[oldX, oldY]) && board[oldX, oldY] != '0') || (!isWhitesTurn && isBlackOrBlank(board[oldX, oldY]) && board[oldX, oldY] != '0'))
             {
-                //pawns
-                if (piece == '1' || piece == '7')
+                //checks if the final square is blank or of the opposing team. If it is, it continues with the legality checker. Otherwise it returns illegal
+                if (((piece == '1' || piece == '2' || piece == '3' || piece == '4' || piece == '5' || piece == '6') && (isBlackOrBlank(board[newX, newY]))) || (piece == '7' || piece == '8' || piece == '9' || piece == 'a' || piece == 'b' || piece == 'c') && (isWhiteOrBlank(board[newX, newY])))
                 {
-                    if (yChange == ((piece == '1') ? 1 : -1) || (yChange == ((piece == '1') ? 2 : -2) && oldY == ((piece == '1') ? 6 : 1)))
+                    //pawns
+                    if (piece == '1' || piece == '7')
                     {
-                        if (xChangeAbs == 0 || (board[newX, newY] != '0' && xChangeAbs == 1 && yChangeAbs == 1))
+                        if (yChange == ((piece == '1') ? 1 : -1) || (yChange == ((piece == '1') ? 2 : -2) && oldY == ((piece == '1') ? 6 : 1)))
                         {
-                            isLegal = true;
-                        }
-                    }
-                    return isLegal;
-                }
-
-                //rooks
-                else if (piece == '2' || piece == '8')
-                {
-                    if (xChangeAbs == 0)
-                    {
-                        isLegal = true;
-                        if (yChange > 0)
-                        {
-                            for (int i = 1; i < (yChangeAbs); i++)
+                            if (xChangeAbs == 0 || (board[newX, newY] != '0' && xChangeAbs == 1 && yChangeAbs == 1))
                             {
-                                if (board[oldX, oldY + i] != '0')
-                                {
-                                    isLegal = false;
-                                }
+                                isLegal = true;
                             }
                         }
-                        else
+                        return isLegal;
+                    }
+
+                    //rooks
+                    else if (piece == '2' || piece == '8')
+                    {
+                        if (xChangeAbs == 0)
                         {
-                            for (int i = 1; i < (yChangeAbs); i++)
+                            isLegal = true;
+                            if (yChange > 0)
                             {
-                                //if (piece == '2')
-                                //{
-                                if (board[oldX, oldY - i] != '0')
-                                {
-                                    isLegal = false;
-                                }
-                                //}
-                                /*else
+                                for (int i = 1; i < (yChangeAbs); i++)
                                 {
                                     if (board[oldX, oldY - i] != '0')
                                     {
                                         isLegal = false;
                                     }
-                                }*/
+                                }
                             }
-                        }
-                    }
-                    else if (yChangeAbs == 0)
-                    {
-                        isLegal = true;
-                        if (xChange > 0)
-                        {
-                            for (int i = 1; i < (xChangeAbs); i++)
+                            else
                             {
-                                if (board[oldX + i, oldY] != '0')
+                                for (int i = 1; i < (yChangeAbs); i++)
                                 {
-                                    isLegal = false;
+                                    if (board[oldX, oldY + i] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
                                 }
                             }
                         }
-                        else
+                        else if (yChangeAbs == 0)
                         {
-                            for (int i = 1; i < (xChangeAbs); i++)
+                            isLegal = true;
+                            if (xChange > 0)
                             {
-                                if (board[oldX - i, oldY] != '0')
+                                for (int i = 1; i < (xChangeAbs); i++)
                                 {
-                                    isLegal = false;
+                                    if (board[oldX - i, oldY] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                for (int i = 1; i < (xChangeAbs); i++)
+                                {
+                                    if (board[oldX + i, oldY] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
                                 }
                             }
                         }
+                        return isLegal;
                     }
-                    return isLegal;
-                }
 
-                //knights
-                else if (piece == '3' || piece == '9')
-                {
-                    if ((yChangeAbs == 1 && xChangeAbs == 2) || (yChangeAbs == 2 && xChangeAbs == 1))
+                    //knights
+                    else if (piece == '3' || piece == '9')
                     {
-                        isLegal = true;
+                        if ((yChangeAbs == 1 && xChangeAbs == 2) || (yChangeAbs == 2 && xChangeAbs == 1))
+                        {
+                            isLegal = true;
+                        }
+                        return isLegal;
                     }
-                    return isLegal;
-                }
 
-                //bishops
-                else if (piece == '4' || piece == 'a')
-                {
-                    if (yChangeAbs == xChangeAbs)
+                    //bishops
+                    else if (piece == '4' || piece == 'a')
+                    {
+                        if (yChangeAbs == xChangeAbs)
+                        {
+                            isLegal = true;
+                            if (yChange > 0)
+                            {
+                                if (xChange > 0)
+                                {
+                                    for (int i = 1; i < (yChangeAbs); i++)
+                                    {
+                                        if (board[oldX - i, oldY - i] != '0')
+                                        {
+                                            isLegal = false;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    for (int i = 1; i < (yChangeAbs); i++)
+                                    {
+                                        if (board[oldX + i, oldY - i] != '0')
+                                        {
+                                            isLegal = false;
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (xChange > 0)
+                                {
+                                    for (int i = 1; i < (yChangeAbs); i++)
+                                    {
+                                        if (board[oldX - i, oldY + i] != '0')
+                                        {
+                                            isLegal = false;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    for (int i = 1; i < (yChangeAbs); i++)
+                                    {
+                                        if (board[oldX + i, oldY + i] != '0')
+                                        {
+                                            isLegal = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        return isLegal;
+                    }
+
+                    //kings
+                    else if (piece == '5' || piece == 'b')
+                    {
+                        if (yChangeAbs <= 1 && xChangeAbs <= 1)
+                        {
+                            isLegal = true;
+                        }
+                        return isLegal;
+                    }
+
+                    //queens
+                    else if (piece == '6' || piece == 'c')
                     {
                         isLegal = true;
                         if (yChange > 0)
                         {
                             if (xChange > 0)
-                            {
-                                for (int i = 1; i < (yChangeAbs); i++)
-                                {
-                                    if (board[oldX + i, oldY + i] != '0')
-                                    {
-                                        isLegal = false;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                for (int i = 1; i < (yChangeAbs); i++)
-                                {
-                                    if (board[oldX - i, oldY + i] != '0')
-                                    {
-                                        isLegal = false;
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (xChange > 0)
-                            {
-                                for (int i = 1; i < (yChangeAbs); i++)
-                                {
-                                    if (board[oldX + i, oldY - i] != '0')
-                                    {
-                                        isLegal = false;
-                                    }
-                                }
-                            }
-                            else
                             {
                                 for (int i = 1; i < (yChangeAbs); i++)
                                 {
@@ -1166,36 +1169,11 @@ None";
                                     }
                                 }
                             }
-                        }
-                    }
-                    return isLegal;
-                }
-
-                //kings
-                else if (piece == '5' || piece == 'b')
-                {
-                    if (yChangeAbs <= 1 && xChangeAbs <= 1)
-                    {
-                        isLegal = true;
-                    }
-                    return isLegal;
-                }
-
-                //queens
-                //has been done stupidly, and needs to be completely rewritten
-                //it should only have one for loop, because otherwise, it checks unnecessary squares
-                else if (piece == '6' || piece == 'c')
-                {
-                    isLegal = true;
-                    if (yChange > 0)
-                    {
-                        if (xChange > 0)
-                        {
-                            for (int i = 1; i < (yChangeAbs); i++)
+                            else
                             {
-                                for (int j = 1; j < (xChangeAbs); j++)
+                                for (int i = 1; i < (yChangeAbs); i++)
                                 {
-                                    if (board[oldX + j, oldY + i] != '0')
+                                    if (board[oldX + i, oldY - i] != '0')
                                     {
                                         isLegal = false;
                                     }
@@ -1204,57 +1182,43 @@ None";
                         }
                         else
                         {
-                            for (int i = 1; i < (yChangeAbs); i++)
+                            if (xChange > 0)
                             {
-                                for (int j = 1; j < (xChangeAbs); j++)
+                                for (int i = 1; i < (yChangeAbs); i++)
                                 {
-                                    if (board[oldX - j, oldY + i] != '0')
+                                    if (board[oldX - i, oldY + i] != '0')
+                                    {
+                                        isLegal = false;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                for (int i = 1; i < (yChangeAbs); i++)
+                                {
+                                    if (board[oldX + i, oldY + i] != '0')
                                     {
                                         isLegal = false;
                                     }
                                 }
                             }
                         }
+                        return isLegal;
                     }
+
+                    //default, because Visual Studio won't let me compile because not all code paths return a value
                     else
                     {
-                        if (xChange > 0)
-                        {
-                            for (int i = 1; i < (yChangeAbs); i++)
-                            {
-                                for (int j = 1; j < (xChangeAbs); j++)
-                                {
-                                    if (board[oldX + j, oldY - i] != '0')
-                                    {
-                                        isLegal = false;
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            for (int i = 1; i < (yChangeAbs); i++)
-                            {
-                                for (int j = 1; j < (xChangeAbs); j++)
-                                {
-                                    if (board[oldX - j, oldY - i] != '0')
-                                    {
-                                        isLegal = false;
-                                    }
-                                }
-                            }
-                        }
+                        return isLegal;
                     }
-                    return isLegal;
                 }
-
-                //default, because Visual Studio won't let me compile because not all code paths return a value
+                //Another default, because Visual Studio won't let me compile because not all code paths return a value
                 else
                 {
                     return isLegal;
                 }
             }
-            //Another default, because Visual Studio won't let me compile because not all code paths return a value
+            //Hooray for defaults and Visual Studio thinking I'm too dumb to know all the possible inputs into my own function
             else
             {
                 return isLegal;
@@ -1298,7 +1262,7 @@ None";
             {
                 newLines[i] = lines[i];
             }
-            newLines[length] = boardName;
+            newLines[length] = boardName + ":0";
 
             for (int i = 1; i < 9; i++)
             {
@@ -1319,7 +1283,7 @@ None";
             int lineNumber = 0;
 
             line = sr.ReadLine();
-            while (line != boardName)
+            while (!line.Contains(boardName))
             {
                 line = sr.ReadLine();
                 lineNumber++;
@@ -1342,7 +1306,7 @@ None";
             File.WriteAllLines(FileAddress, newLines);
         }
 
-        private void SaveBoard(string boardName, char[,] board)
+        private void SaveBoard(string boardName, char[,] board, bool isWhitesTurn)
         {
             string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
             StreamReader sr = new StreamReader(FileAddress);
@@ -1350,7 +1314,7 @@ None";
             int lineNumber = 1;
 
             line = sr.ReadLine();
-            while (line != boardName)
+            while (!line.Contains(boardName))
             {
                 line = sr.ReadLine();
                 lineNumber++;
@@ -1358,7 +1322,8 @@ None";
             sr.Close();
 
             var lines = File.ReadAllLines(FileAddress);
-            
+            lines[lineNumber - 1] = boardName + ":" + (isWhitesTurn ? "1" : "0");
+
             for (int i = 0; i < 8; i++)
             {
                 lines[lineNumber + i] = "";
@@ -1380,7 +1345,7 @@ None";
             int lineNumber = 1;
 
             line = sr.ReadLine();
-            while (line != boardName)
+            while (!line.Contains(boardName))
             {
                 line = sr.ReadLine();
                 lineNumber++;
