@@ -19,9 +19,9 @@ using YoutubeExtractor;
 
 namespace ConsoleApp1
 {
-	class MyBot
-	{
-		DiscordClient discord;
+    class MyBot
+    {
+        DiscordClient discord;
 
         public MyBot()
         {
@@ -47,7 +47,7 @@ namespace ConsoleApp1
             var commands = discord.GetService<CommandService>();
             Random rnd = new Random();
 
-            commandList.Add("whiteboard");
+            //commandList.Add("whiteboard");
             commands.CreateCommand("whiteboard")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -70,7 +70,7 @@ None";
                     }
                 });
 
-            commandList.Add("verify");
+            //commandList.Add("verify");
             commands.CreateCommand("verify")
                 .Parameter("RequestedName", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -100,7 +100,7 @@ Can only be used in the verification channel";
                     }
                 });
 
-            commandList.Add("purge");
+            //commandList.Add("purge");
             commands.CreateCommand("purge")
                 .Parameter("NumberOfMessages", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -446,11 +446,11 @@ To find the number of tokens that you possess, use `!tokens`";
                             }
                             else
                             {
-                                BetReturn = BetAmount * -1;
+                                BetReturn = 0;
                             }
                             //End the incredibly long and inefficient series of 'if' statements here
 
-                            newTokens = currentTokens + BetReturn;
+                            newTokens = currentTokens - BetAmount + BetReturn;
                             await e.Channel.SendFile(img1);
                             await e.Channel.SendFile(img2);
                             await e.Channel.SendFile(img3);
@@ -488,11 +488,11 @@ None
 
 **Restrictions:**
 None";
-                    if(e.GetArg("param") == "help")
+                    if (e.GetArg("param") == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
-                    else if(e.GetArg("param") == "")
+                    else if (e.GetArg("param") == "")
                     {
                         await e.Channel.SendMessage("Your user id is " + e.User.Id);
                     }
@@ -555,19 +555,19 @@ You must be an administrator on the server to use this command";
                     }
                     else if (e.User.ServerPermissions.Administrator == true)
                     {
-                            await e.Channel.SendMessage("Got to p2");
-                            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
-                            var oldLines = File.ReadAllLines(FileAddress);
-                            int length = oldLines.Length;
-                            string[] newLines = new string[length + 2];
-                            for (int i = 0; i < length; i++)
-                            {
-                                newLines[i] = oldLines[i];
-                            }
-                            newLines[length] = e.GetArg("UserId");
-                            newLines[length + 1] = "0";
-                            File.WriteAllLines(FileAddress, newLines);
-                            await e.Channel.SendMessage("User with id " + e.GetArg("UserId") + " has been successfully added to the database");
+                        await e.Channel.SendMessage("Got to p2");
+                        string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
+                        var oldLines = File.ReadAllLines(FileAddress);
+                        int length = oldLines.Length;
+                        string[] newLines = new string[length + 2];
+                        for (int i = 0; i < length; i++)
+                        {
+                            newLines[i] = oldLines[i];
+                        }
+                        newLines[length] = e.GetArg("UserId");
+                        newLines[length + 1] = "0";
+                        File.WriteAllLines(FileAddress, newLines);
+                        await e.Channel.SendMessage("User with id " + e.GetArg("UserId") + " has been successfully added to the database");
                     }
                     else
                     {
@@ -594,7 +594,7 @@ You must be an administrator on the server to use this command";
                     {
                         await e.Channel.SendMessage(desc);
                     }
-                    else if(e.User.ServerPermissions.Administrator == true)
+                    else if (e.User.ServerPermissions.Administrator == true)
                     {
                         int spaceIndex = param.IndexOf(" ");
                         string userId = param.Substring(0, spaceIndex);
@@ -602,8 +602,8 @@ You must be an administrator on the server to use this command";
                         int currentTokens = GetTokens(userId);
                         int newTokens = currentTokens + bonusTokens;
                         SetTokens(userId, newTokens);
-                        await e.Channel.SendMessage("User " + e.Server.GetUser(UInt64.Parse(userId)).Nickname + " has been given " + bonusTokens + @" bonus tokens.
-" + e.Server.GetUser(UInt64.Parse(userId)).Nickname + " now has " + newTokens + " tokens");
+                        await e.Channel.SendMessage("User " + e.Server.GetUser(UInt64.Parse(userId)).Name + " has been given " + bonusTokens + @" bonus tokens.
+" + e.Server.GetUser(UInt64.Parse(userId)).Name + " now has " + newTokens + " tokens");
                     }
                     else
                     {
@@ -624,7 +624,7 @@ None
 
 **Restrictions:**
 None";
-                    if(e.GetArg("param") == "help")
+                    if (e.GetArg("param") == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
@@ -668,8 +668,8 @@ You must possess the amount of tokens that you wish to give";
                         {
                             SetTokens(giveId, GetTokens(giveId) - tokens);
                             SetTokens(receiveId, GetTokens(receiveId) + tokens);
-                            await e.Channel.SendMessage("User " + e.User.Nickname + " has successfully given user with user id " + receiveId + " " + tokens + @" tokens.
-" + e.User.Nickname + " now has " + GetTokens(giveId) + @" tokens
+                            await e.Channel.SendMessage("User " + e.User.Name + " has successfully given user with user id " + receiveId + " " + tokens + @" tokens.
+" + e.User.Name + " now has " + GetTokens(giveId) + @" tokens
 User with user id " + receiveId + " now has " + GetTokens(receiveId) + " tokens");
                         }
                     }
@@ -686,8 +686,8 @@ Makes an ASCII chess board which can be edited or displayed using this command
 **Arguments:**
 `Action` - The action to take. Can be `create`, `move`, `display`, `delete`, or `checkmate`
 `BoardName` - The name of the board which you want to edit or display. Set when the board is created
-`Square1` - The location of the piece that you would like to move. Given in the format LetterNumber. e.g. A6. Not necessary for actions `create`, `display`, and `delete'
-`Square2` - The location that you would like to move the selected piece to. Given in the format LetterNumber. e.g. A6. Not necessary for actions `create`, `display`, and `delete'
+`Square1` - The location of the piece that you would like to move. Given in the format LetterNumber. e.g. A6. Not necessary for actions `create`, `display`, and `delete`
+`Square2` - The location that you would like to move the selected piece to. Given in the format LetterNumber. e.g. A6. Not necessary for actions `create`, `display`, and `delete`
 
 **Restrictions:**
 None";
@@ -827,7 +827,88 @@ None";
                     await e.Channel.SendMessage(e.Server.Id.ToString());
                 });
 
+            commandList.Add("lucas");
+            commands.CreateCommand("lucas")
+                .Parameter("termNumber", ParameterType.Unparsed)
+                .Do(async (e) => {
+                    string arg = e.GetArg("termNumber");
+                    string desc = @"**Description:**
+Returns the requested term from the Lucas Sequence
+
+**Arguments:**
+`TermNumber` - The index of the term that you would like to request
+
+**Restrictions:**
+Due to operator overflow errors in the calculation of the sequence, `TermNumber` must be less than 3225";
+                    if (arg == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+                    else
+                    {
+                        string term = GetLucas(Int32.Parse(arg));
+                        await e.Channel.SendMessage("The " + arg + "th term of the Lucas Sequence is " + term);
+                    }
+                });
+
+            commandList.Add("fibonacci");
+            commands.CreateCommand("fibonacci")
+                .Parameter("termNumber", ParameterType.Unparsed)
+                .Do(async (e) => {
+                    string arg = e.GetArg("termNumber");
+                    string desc = @"**Description:**
+Returns the requested term from the Fibonacci Sequence
+
+**Arguments:**
+`TermNumber` - The index of the term that you would like to request
+
+**Restrictions:**
+Due to operator overflow errors in the calculation of the sequence, `TermNumber` must be less than 3225";
+                    if (arg == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+                    else
+                    {
+                        string term = GetFibonacci(Int32.Parse(arg));
+                        await e.Channel.SendMessage("The " + arg + "th term of the Fibonacci Sequence is " + term);
+                    }
+                });
+
+            //Currently broken for message amounts over 100. Can't seem to get it to loop properly
+            commands.CreateCommand("getmessages")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    if (e.User.Id == 193399026748620800)
+                    {
+                        int numOfMessages = Int32.Parse(e.GetArg("param"));
+                        //deletes the message containing the command to download from the channel
+                        Message[] messages = new Message[numOfMessages];
+                        var message = await e.Channel.DownloadMessages(2);
+                        messages[1] = message[1];
+                        await e.Channel.DeleteMessages(message);
+                        string[] lines = new string[numOfMessages];
+
+                        for (int i = 0; i < (numOfMessages / 100); i++)
+                        {
+                            Console.WriteLine(messages[(messages[0] == null) ? (i * 100 - 1) : (1)].RawText);
+                            messages.Concat(await e.Channel.DownloadMessages(100, messages[(messages[0] == null) ? (i * 100 - 1) : (1)].Id));
+                        }
+
+                        for (int j = 0; j < numOfMessages; j++)
+                        {
+                            lines[j] = messages[j].RawText;
+                        }
+                        string fileAddress = @"C:\users\Seth Dolin\Desktop\DiscordNeuralNetwork\Messages.txt";
+
+
+                        File.WriteAllLines(fileAddress, lines);
+                    }
+                });
+
             //commandList.Add("play");
+            //Currently broken. Need to figure out how to get the audio downloader to extract the audio properly, then it should work fine from there
             commands.CreateCommand("play")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -909,6 +990,72 @@ None";
 				await discord.Connect("Mjk4NTk0NDQyNjAyODcyODM2.C8RnWg.QmRSfJ0atEkcwruNqFwqDwJJb_w", TokenType.Bot);
 			});
 		}
+
+        private static BigInteger[] CalculateFibonacci(int n)
+        {
+            Console.WriteLine("Got to point 1");
+            BigInteger[] terms = new BigInteger[n];
+            terms[0] = 1;
+            terms[1] = 1;
+            for (int i = 2; i < n; i++)
+            {
+                terms[i] = (terms[i - 1] + terms[i - 2]);
+            }
+            return terms;
+        }
+
+        private static void SaveFibonacciString(BigInteger[] terms)
+        {
+            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Sequences\Fibonacci.txt";
+            string[] lines = new string[terms.Length];
+            for (int i = 0; i < terms.Length; i++)
+            {
+                lines[i] = terms[i].ToString();
+            }
+
+            File.WriteAllLines(fileAddress, lines);
+        }
+
+        private string GetFibonacci(int n)
+        {
+            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Sequences\Fibonacci.txt";
+
+            var lines = File.ReadAllLines(fileAddress);
+            return lines[n - 1];
+        }
+
+        private static BigInteger[] CalculateLucas(int n)
+        {
+            Console.WriteLine("Got to point 1");
+            BigInteger[] terms = new BigInteger[n];
+            terms[0] = 1;
+            terms[1] = 3;
+            for (int i = 2; i < n; i++)
+            {
+                terms[i] = (terms[i - 1] + terms[i - 2]);
+            }
+            return terms;
+        }
+
+        private static void SaveLucasString(BigInteger[] terms)
+        {
+            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Sequences\Lucas.txt";
+            string[] lines = new string[terms.Length];
+            for (int i = 0; i < terms.Length; i++)
+            {
+                lines[i] = terms[i].ToString();
+            }
+
+            File.WriteAllLines(fileAddress, lines);
+        }
+
+        private string GetLucas(int n)
+        {
+            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Sequences\Lucas.txt";
+
+            var lines = File.ReadAllLines(fileAddress);
+            return lines[n - 1];
+        }
 
         private bool isWhitesTurn(string boardName)
         {
@@ -1262,7 +1409,7 @@ None";
             {
                 newLines[i] = lines[i];
             }
-            newLines[length] = boardName + ":0";
+            newLines[length] = boardName + ":1";
 
             for (int i = 1; i < 9; i++)
             {
@@ -1378,6 +1525,10 @@ None";
             else if (serverId == "237688211420217344")
             {
                 emojiCodes = new string[] { "<:Blank:298927119562571777>", "<:WPawn:298602840694325248>", "<:WRook:298602840706777088>", "<:WKnight:298602840824479754>", "<:WBishop:298602840304254978>", "<:WKing:298602840333615106>", "<:WQueen:298602840916623370>", "<:BPawn:298602840488804362>", "<:BRook:298602840249860102>", "<:BKnight:298602840295735306>", "<:BBishop:298602839805263875>", "<:BKing:298602840207917056>", "<:BQueen:298602840027561985>"};
+            }
+            else if (serverId == "308360449509031936")
+            {
+                emojiCodes = new string[] { "<:Blank:308361674568630277>", "<:WPawn:308361675139186698>", "<:WRook:308361674975477762>", "<:WKnight:308361675206033428>", "<:WBishop:308361674899849216>", "<:WKing:308361674979803137>", "<:WQueen:308361675029872641>", "<:BPawn:308361674610442241>", "<:BRook:308361674816094208>", "<:BKnight:308361674535075841>", "<:BBishop:308361674191142942>", "<:BKing:308361674413572097>", "<:BQueen:308361674405052418>" };
             }
             switch (piece)
             {
