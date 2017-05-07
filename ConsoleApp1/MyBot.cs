@@ -1359,7 +1359,15 @@ None";
                     //queens
                     else if (piece == '6' || piece == 'c')
                     {
-                        isLegal = true;
+                        //checks to see if the queen is moving in a cardinal direction, and returns false if she isn't
+                        if ((xChangeAbs == 0 && yChangeAbs != 0) || (yChangeAbs == 0 && xChangeAbs != 0) || (xChangeAbs == yChangeAbs))
+                        {
+                            isLegal = true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
                         if (yChange > 0)
                         {
                             if (xChange > 0)
