@@ -231,18 +231,18 @@ To find the number of tokens that you possess, use `!tokens`
 
 The payouts are shown below. If you believe that the payouts are being calculated incorrectly, please let me know.";
 
-                    int BetAmount = 0;
+                    ulong BetAmount = 0;
 
                     if (e.GetArg("BetAmount") == "help")
                     {
                         await e.Channel.SendMessage(desc);
                         await e.Channel.SendFile(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Payouts.png");
                     }
-                    else if (Int32.TryParse(e.GetArg("BetAmount"), out BetAmount))
+                    else if (ulong.TryParse(e.GetArg("BetAmount"), out BetAmount))
                     {
                         if (e.Channel.Id.ToString() == "308360449509031936")
                         {
-                            int tokens = GetTokens(e.User.Id.ToString());
+                            ulong tokens = GetTokens(e.User.Id.ToString());
                             tokens /= 2;
                             SetTokens(e.User.Id.ToString(), tokens);
                             await e.Channel.SendMessage("Use the ***FUCKING*** slots channel for slots. For your infractions, your token count has been halved.");
@@ -254,8 +254,8 @@ The payouts are shown below. If you believe that the payouts are being calculate
 
                             string Id = e.User.Id.ToString();
                             string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
-                            int currentTokens = GetTokens(Id);
-                            int newTokens = 0;
+                            ulong currentTokens = GetTokens(Id);
+                            ulong newTokens = 0;
                             if (!File.ReadAllText(FileAddress).Contains(Id))
                             {
                                 await e.Channel.SendMessage("You are not registered in the token database. Please contact a moderator to have them add you and give you starting tokens");
@@ -269,7 +269,7 @@ The payouts are shown below. If you believe that the payouts are being calculate
                                 string img1 = "";
                                 string img2 = "";
                                 string img3 = "";
-                                int BetReturn = 0;
+                                ulong BetReturn = 0;
 
                                 switch (num1)
                                 {
@@ -617,9 +617,9 @@ You must be an administrator on the server to use this command";
                     {
                         int spaceIndex = param.IndexOf(" ");
                         string userId = param.Substring(0, spaceIndex);
-                        int bonusTokens = Int32.Parse(param.Substring(spaceIndex, param.Length - spaceIndex));
-                        int currentTokens = GetTokens(userId);
-                        int newTokens = currentTokens + bonusTokens;
+                        ulong bonusTokens = ulong.Parse(param.Substring(spaceIndex, param.Length - spaceIndex));
+                        ulong currentTokens = GetTokens(userId);
+                        ulong newTokens = currentTokens + bonusTokens;
                         SetTokens(userId, newTokens);
                         await e.Channel.SendMessage("User " + e.Server.GetUser(UInt64.Parse(userId)).Name + " has been given " + string.Format("{0:n0}", bonusTokens) + @" bonus tokens.
 " + e.Server.GetUser(UInt64.Parse(userId)).Name + " now has " + string.Format("{0:n0}", newTokens) + " tokens");
@@ -654,9 +654,9 @@ You must be an administrator on the server to use this command";
                     {
                         int spaceIndex = param.IndexOf(" ");
                         string userId = param.Substring(0, spaceIndex);
-                        int bonusTokens = Int32.Parse(param.Substring(spaceIndex, param.Length - spaceIndex));
-                        int currentTokens = GetTokens(userId);
-                        int newTokens = currentTokens - bonusTokens;
+                        ulong bonusTokens = ulong.Parse(param.Substring(spaceIndex, param.Length - spaceIndex));
+                        ulong currentTokens = GetTokens(userId);
+                        ulong newTokens = currentTokens - bonusTokens;
                         SetTokens(userId, newTokens);
                         await e.Channel.SendMessage("User " + e.Server.GetUser(UInt64.Parse(userId)).Name + " has had " + string.Format("{0:n0}", bonusTokens) + @" tokens taken from them.
 " + e.Server.GetUser(UInt64.Parse(userId)).Name + " now has " + string.Format("{0:n0}", newTokens) + " tokens");
@@ -686,7 +686,7 @@ None";
                     }
                     else
                     {
-                        int tokens = GetTokens(e.User.Id.ToString());
+                        ulong tokens = GetTokens(e.User.Id.ToString());
 
                         await e.Channel.SendMessage("You have " + string.Format("{0:n0}", tokens) + " tokens");
                     }
@@ -716,7 +716,7 @@ You must possess the amount of tokens that you wish to give";
                         int spaceIndex = param.IndexOf(" ");
                         string receiveId = param.Substring(0, spaceIndex);
                         string giveId = e.User.Id.ToString();
-                        int tokens = Int32.Parse(param.Substring(spaceIndex, param.Length - spaceIndex));
+                        ulong tokens = ulong.Parse(param.Substring(spaceIndex, param.Length - spaceIndex));
                         if (GetTokens(e.User.Id.ToString()) < tokens) {
                             await e.Channel.SendMessage("You do not have enough tokens to perform this action");
                         }
@@ -1682,12 +1682,12 @@ None";
 			Console.WriteLine(e.Message);
 		}
 
-        private int GetTokens(string userId)
+        private ulong GetTokens(string userId)
         {
             string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
             StreamReader sr = new StreamReader(FileAddress);
 
-            int currentTokens = 0;
+            ulong currentTokens = 0;
             int lineNumber = 1;
             string line = "";
             string Id = userId;
@@ -1699,13 +1699,13 @@ None";
                 lineNumber++;
             }
             line = sr.ReadLine();
-            currentTokens = Int32.Parse(line);
+            currentTokens = ulong.Parse(line);
             sr.Close();
             
             return currentTokens;
         }
 
-        private void SetTokens(string userId, int newTokens)
+        private void SetTokens(string userId, ulong newTokens)
         {
             string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
             var lines = File.ReadAllLines(FileAddress);
@@ -1713,7 +1713,7 @@ None";
             int lineNumber = 1;
             string line = "";
             string Id = userId;
-            int oldTokens = GetTokens(Id);
+            ulong oldTokens = GetTokens(Id);
 
             line = sr.ReadLine();
             while (line != Id)
