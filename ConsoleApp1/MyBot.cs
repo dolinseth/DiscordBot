@@ -47,6 +47,7 @@ namespace ConsoleApp1
             var commands = discord.GetService<CommandService>();
             Random rnd = new Random();
 
+            //deprecated so it isn't in the list
             //commandList.Add("whiteboard");
             commands.CreateCommand("whiteboard")
                 .Parameter("param", ParameterType.Unparsed)
@@ -70,6 +71,7 @@ None";
                     }
                 });
 
+            //deprecated so it isn't in the list
             //commandList.Add("verify");
             commands.CreateCommand("verify")
                 .Parameter("RequestedName", ParameterType.Unparsed)
@@ -100,6 +102,7 @@ Can only be used in the verification channel";
                     }
                 });
 
+            //admin only command so it isn't in the list
             //commandList.Add("purge");
             commands.CreateCommand("purge")
                 .Parameter("NumberOfMessages", ParameterType.Unparsed)
@@ -224,249 +227,263 @@ Plays slots
 
 **Restrictions:**
 You must possess the amount of tokens that you wish to gamble
-To find the number of tokens that you possess, use `!tokens`";
+To find the number of tokens that you possess, use `!tokens`
+
+The payouts are shown below. If you believe that the payouts are being calculated incorrectly, please let me know.";
 
                     int BetAmount = 0;
 
                     if (e.GetArg("BetAmount") == "help")
                     {
                         await e.Channel.SendMessage(desc);
+                        await e.Channel.SendFile(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Payouts.png");
                     }
                     else if (Int32.TryParse(e.GetArg("BetAmount"), out BetAmount))
                     {
-                        double num1 = Math.Pow(2, rnd.Next(1, 9));
-                        double num2 = Math.Pow(2, rnd.Next(9, 17));
-                        double num3 = Math.Pow(2, rnd.Next(17, 25));
-
-                        string Id = e.User.Id.ToString();
-                        string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
-                        int currentTokens = GetTokens(Id);
-                        int newTokens = 0;
-                        if (!File.ReadAllText(FileAddress).Contains(Id))
+                        if (e.Channel.Id.ToString() == "308360449509031936")
                         {
-                            await e.Channel.SendMessage("You are not registered in the token database. Please contact a moderator to have them add you and give you starting tokens");
+                            int tokens = GetTokens(e.User.Id.ToString());
+                            tokens /= 2;
+                            SetTokens(e.User.Id.ToString(), tokens);
+                            await e.Channel.SendMessage("Use the ***FUCKING*** slots channel for slots. For your infractions, your token count has been halved.");
                         }
-                        else if (BetAmount > currentTokens)
-                        {
-                            await e.Channel.SendMessage("You do not have enough tokens to perform this bet");
-                        }
-                        else
-                        {
-                            string img1 = "";
-                            string img2 = "";
-                            string img3 = "";
-                            int BetReturn = 0;
+                        else {
+                            double num1 = Math.Pow(2, rnd.Next(1, 9));
+                            double num2 = Math.Pow(2, rnd.Next(9, 17));
+                            double num3 = Math.Pow(2, rnd.Next(17, 25));
 
-                            switch (num1) {
-                                case 2:
-                                    img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blank.png";
-                                    break;
-
-                                case 4:
-                                    img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\RedBar.png";
-                                    break;
-
-                                case 8:
-                                    img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\WhiteBar.png";
-                                    break;
-
-                                case 16:
-                                    img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\BlueBar.png";
-                                    break;
-
-                                case 32:
-                                    img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Red7.png";
-                                    break;
-
-                                case 64:
-                                    img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\White7.png";
-                                    break;
-
-                                case 128:
-                                    img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blue7.png";
-                                    break;
-
-                                case 256:
-                                    img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Flag7.png";
-                                    break;
-
-                                default:
-                                    break;
-                            }
-
-                            switch (num2)
+                            string Id = e.User.Id.ToString();
+                            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
+                            int currentTokens = GetTokens(Id);
+                            int newTokens = 0;
+                            if (!File.ReadAllText(FileAddress).Contains(Id))
                             {
-                                case 512:
-                                    img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blank.png";
-                                    break;
-
-                                case 1024:
-                                    img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\RedBar.png";
-                                    break;
-
-                                case 2048:
-                                    img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\WhiteBar.png";
-                                    break;
-
-                                case 4096:
-                                    img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\BlueBar.png";
-                                    break;
-
-                                case 8192:
-                                    img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Red7.png";
-                                    break;
-
-                                case 16384:
-                                    img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\White7.png";
-                                    break;
-
-                                case 32768:
-                                    img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blue7.png";
-                                    break;
-
-                                case 65536:
-                                    img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Flag7.png";
-                                    break;
-
-                                default:
-                                    break;
+                                await e.Channel.SendMessage("You are not registered in the token database. Please contact a moderator to have them add you and give you starting tokens");
                             }
-
-                            switch (num3)
+                            else if (BetAmount > currentTokens)
                             {
-                                case 131072:
-                                    img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blank.png";
-                                    break;
-
-                                case 262144:
-                                    img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\RedBar.png";
-                                    break;
-
-                                case 524288:
-                                    img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\WhiteBar.png";
-                                    break;
-
-                                case 1048576:
-                                    img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\BlueBar.png";
-                                    break;
-
-                                case 2097152:
-                                    img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Red7.png";
-                                    break;
-
-                                case 4194304:
-                                    img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\White7.png";
-                                    break;
-
-                                case 8388608:
-                                    img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blue7.png";
-                                    break;
-
-                                case 16777216:
-                                    img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Flag7.png";
-                                    break;
-
-                                default:
-                                    break;
-                            }
-
-                            //Begin the incredibly long and inefficient series of 'if' statements here
-                            int SlotValue = System.Convert.ToInt32(num1) + System.Convert.ToInt32(num2) + System.Convert.ToInt32(num3);
-                            if (SlotValue == 16843008)//Flag 7, Flag 7, Flag 7
-                            {
-                                BetReturn = BetAmount * 4000;
-                            }
-                            else if (SlotValue == 8405024)//Red 7, White 7, Blue 7
-                            {
-                                BetReturn = BetAmount * 400;
-                            }
-                            else if (SlotValue == 2105376)//Red 7, Red 7, Red 7
-                            {
-                                BetReturn = BetAmount * 300;
-                            }
-                            else if (SlotValue == 4210752)//White 7, White 7, White 7
-                            {
-                                BetReturn = BetAmount * 200;
-                            }
-                            else if (SlotValue == 8421504)//Blue 7, Blue 7, Blue 7
-                            {
-                                BetReturn = BetAmount * 100;
-                            }
-                            else if ((num1 == 32 || num1 == 64 || num1 == 128 || num1 == 256) && (num2 == 8192 || num2 == 16384 || num2 == 32768 || num2 == 65536) && (num3 == 2097152 || num3 == 4194304 || num3 == 8388608 || num3 == 16777216))//Any 7, Any 7, Any 7
-                            {
-                                BetReturn = BetAmount * 50;
-                            }
-                            else if (SlotValue == 1050628)//Red Bar, White Bar, Blue Bar
-                            {
-                                BetReturn = BetAmount * 50;
-                            }
-                            else if (SlotValue == 1052688)//Blue Bar, Blue Bar, Blue Bar
-                            {
-                                BetReturn = BetAmount * 40;
-                            }
-                            else if (SlotValue == 526344)//White Bar, White Bar, White Bar
-                            {
-                                BetReturn = BetAmount * 20;
-                            }
-                            else if ((num1 == 4 || num1 == 32) && (num2 == 2048 || num2 == 16384) && (num3 == 1048576 || num3 == 8388608))//Any Red, Any White, Any Blue
-                            {
-                                BetReturn = BetAmount * 20;
-                            }
-                            else if (SlotValue == 263172)//Red Bar, Red Bar, Red Bar
-                            {
-                                BetReturn = BetAmount * 10;
-                            }
-                            else if ((num1 == 4 || num1 == 8 || num1 == 16) && (num2 == 1024 || num2 == 2048 || num2 == 4096) && (num3 == 252144 || num3 == 524288 || num3 == 1048576))//Any Bar, Any Bar, Any Bar
-                            {
-                                BetReturn = BetAmount * 5;
-                            }
-                            else if ((num1 == 256 && (num2 == 65536 || num3 == 16777216)) || (num2 == 65536 && (num1 == 256 || num3 == 16777216)))//Contains 2 Flag 7's
-                            {
-                                BetReturn = BetAmount * 5;
-                            }
-                            else if ((num1 == 4 || num1 == 32) && (num2 == 1024 || num2 == 8192) && (num3 == 262144 || num3 == 2097152))//Any Red, Any Red, Any Red
-                            {
-                                BetReturn = BetAmount * 2;
-                            }
-                            else if ((num1 == 8 || num1 == 64) && (num2 == 2048 || num2 == 16384) && (num3 == 524288 || num3 == 4194304))//Any White, Any White, Any White
-                            {
-                                BetReturn = BetAmount * 2;
-                            }
-                            else if ((num1 == 4 || num1 == 32) && (num2 == 1024 || num2 == 8192) && (num3 == 1048576 || num3 == 8388608))//Any Blue, Any Blue, Any Blue
-                            {
-                                BetReturn = BetAmount * 2;
-                            }
-                            else if (num1 == 256 || num2 == 65536 || num3 == 16777216)//Contains 1 Flag 7
-                            {
-                                BetReturn = BetAmount * 2;
-                            }
-                            else if (SlotValue == 131586)//Blank, Blank, Blank
-                            {
-                                BetReturn = BetAmount;
+                                await e.Channel.SendMessage("You do not have enough tokens to perform this bet");
                             }
                             else
                             {
-                                BetReturn = 0;
-                            }
-                            //End the incredibly long and inefficient series of 'if' statements here
+                                string img1 = "";
+                                string img2 = "";
+                                string img3 = "";
+                                int BetReturn = 0;
 
-                            newTokens = currentTokens - BetAmount + BetReturn;
-                            await e.Channel.SendFile(img1);
-                            await e.Channel.SendFile(img2);
-                            await e.Channel.SendFile(img3);
+                                switch (num1)
+                                {
+                                    case 2:
+                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blank.png";
+                                        break;
 
-                            if (BetReturn > 0) {
-                                await e.Channel.SendMessage(e.User.Name + " has won " + BetReturn + @" tokens
-" + e.User.Name + " now has " + newTokens + " tokens");
-                            }
-                            else
-                            {
-                                await e.Channel.SendMessage(e.User.Name + " has lost " + BetAmount + @" tokens
-" + e.User.Name + " now has " + newTokens + " tokens");
-                            }
+                                    case 4:
+                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\RedBar.png";
+                                        break;
 
-                            //Save new token count
-                            SetTokens(e.User.Id.ToString(), newTokens);
+                                    case 8:
+                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\WhiteBar.png";
+                                        break;
+
+                                    case 16:
+                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\BlueBar.png";
+                                        break;
+
+                                    case 32:
+                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Red7.png";
+                                        break;
+
+                                    case 64:
+                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\White7.png";
+                                        break;
+
+                                    case 128:
+                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blue7.png";
+                                        break;
+
+                                    case 256:
+                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Flag7.png";
+                                        break;
+
+                                    default:
+                                        break;
+                                }
+
+                                switch (num2)
+                                {
+                                    case 512:
+                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blank.png";
+                                        break;
+
+                                    case 1024:
+                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\RedBar.png";
+                                        break;
+
+                                    case 2048:
+                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\WhiteBar.png";
+                                        break;
+
+                                    case 4096:
+                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\BlueBar.png";
+                                        break;
+
+                                    case 8192:
+                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Red7.png";
+                                        break;
+
+                                    case 16384:
+                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\White7.png";
+                                        break;
+
+                                    case 32768:
+                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blue7.png";
+                                        break;
+
+                                    case 65536:
+                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Flag7.png";
+                                        break;
+
+                                    default:
+                                        break;
+                                }
+
+                                switch (num3)
+                                {
+                                    case 131072:
+                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blank.png";
+                                        break;
+
+                                    case 262144:
+                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\RedBar.png";
+                                        break;
+
+                                    case 524288:
+                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\WhiteBar.png";
+                                        break;
+
+                                    case 1048576:
+                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\BlueBar.png";
+                                        break;
+
+                                    case 2097152:
+                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Red7.png";
+                                        break;
+
+                                    case 4194304:
+                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\White7.png";
+                                        break;
+
+                                    case 8388608:
+                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blue7.png";
+                                        break;
+
+                                    case 16777216:
+                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Flag7.png";
+                                        break;
+
+                                    default:
+                                        break;
+                                }
+
+                                //Begin the incredibly long and inefficient series of 'if' statements here
+                                int SlotValue = System.Convert.ToInt32(num1) + System.Convert.ToInt32(num2) + System.Convert.ToInt32(num3);
+                                if (SlotValue == 16843008)//Flag 7, Flag 7, Flag 7
+                                {
+                                    BetReturn = BetAmount * 4000;
+                                }
+                                else if (SlotValue == 8405024)//Red 7, White 7, Blue 7
+                                {
+                                    BetReturn = BetAmount * 400;
+                                }
+                                else if (SlotValue == 2105376)//Red 7, Red 7, Red 7
+                                {
+                                    BetReturn = BetAmount * 300;
+                                }
+                                else if (SlotValue == 4210752)//White 7, White 7, White 7
+                                {
+                                    BetReturn = BetAmount * 200;
+                                }
+                                else if (SlotValue == 8421504)//Blue 7, Blue 7, Blue 7
+                                {
+                                    BetReturn = BetAmount * 100;
+                                }
+                                else if ((num1 == 32 || num1 == 64 || num1 == 128 || num1 == 256) && (num2 == 8192 || num2 == 16384 || num2 == 32768 || num2 == 65536) && (num3 == 2097152 || num3 == 4194304 || num3 == 8388608 || num3 == 16777216))//Any 7, Any 7, Any 7
+                                {
+                                    BetReturn = BetAmount * 50;
+                                }
+                                else if (SlotValue == 1050628)//Red Bar, White Bar, Blue Bar
+                                {
+                                    BetReturn = BetAmount * 50;
+                                }
+                                else if (SlotValue == 1052688)//Blue Bar, Blue Bar, Blue Bar
+                                {
+                                    BetReturn = BetAmount * 40;
+                                }
+                                else if (SlotValue == 526344)//White Bar, White Bar, White Bar
+                                {
+                                    BetReturn = BetAmount * 20;
+                                }
+                                else if ((num1 == 4 || num1 == 32) && (num2 == 2048 || num2 == 16384) && (num3 == 1048576 || num3 == 8388608))//Any Red, Any White, Any Blue
+                                {
+                                    BetReturn = BetAmount * 20;
+                                }
+                                else if (SlotValue == 263172)//Red Bar, Red Bar, Red Bar
+                                {
+                                    BetReturn = BetAmount * 10;
+                                }
+                                else if ((num1 == 4 || num1 == 8 || num1 == 16) && (num2 == 1024 || num2 == 2048 || num2 == 4096) && (num3 == 252144 || num3 == 524288 || num3 == 1048576))//Any Bar, Any Bar, Any Bar
+                                {
+                                    BetReturn = BetAmount * 5;
+                                }
+                                else if ((num1 == 256 && (num2 == 65536 || num3 == 16777216)) || (num2 == 65536 && (num1 == 256 || num3 == 16777216)))//Contains 2 Flag 7's
+                                {
+                                    BetReturn = BetAmount * 5;
+                                }
+                                else if ((num1 == 4 || num1 == 32) && (num2 == 1024 || num2 == 8192) && (num3 == 262144 || num3 == 2097152))//Any Red, Any Red, Any Red
+                                {
+                                    BetReturn = BetAmount * 2;
+                                }
+                                else if ((num1 == 8 || num1 == 64) && (num2 == 2048 || num2 == 16384) && (num3 == 524288 || num3 == 4194304))//Any White, Any White, Any White
+                                {
+                                    BetReturn = BetAmount * 2;
+                                }
+                                else if ((num1 == 4 || num1 == 32) && (num2 == 1024 || num2 == 8192) && (num3 == 1048576 || num3 == 8388608))//Any Blue, Any Blue, Any Blue
+                                {
+                                    BetReturn = BetAmount * 2;
+                                }
+                                else if (num1 == 256 || num2 == 65536 || num3 == 16777216)//Contains 1 Flag 7
+                                {
+                                    BetReturn = BetAmount * 2;
+                                }
+                                else if (SlotValue == 131586)//Blank, Blank, Blank
+                                {
+                                    BetReturn = BetAmount;
+                                }
+                                else
+                                {
+                                    BetReturn = 0;
+                                }
+                                //End the incredibly long and inefficient series of 'if' statements here
+
+                                newTokens = currentTokens - BetAmount + BetReturn;
+                                await e.Channel.SendFile(img1);
+                                await e.Channel.SendFile(img2);
+                                await e.Channel.SendFile(img3);
+
+                                if (BetReturn > 0)
+                                {
+                                    await e.Channel.SendMessage(e.User.Name + " has won " + string.Format("{0:n0}", BetReturn) + @" tokens
+" + e.User.Name + " now has " + string.Format("{0:n0}", newTokens) + " tokens");
+                                }
+                                else
+                                {
+                                    await e.Channel.SendMessage(e.User.Name + " has lost " + string.Format("{0:n0}", BetAmount) + @" tokens
+" + e.User.Name + " now has " + string.Format("{0:n0}", newTokens) + " tokens");
+                                }
+
+                                //Save new token count
+                                SetTokens(e.User.Id.ToString(), newTokens);
+                            }
                         }
                     }
                     else
@@ -536,7 +553,8 @@ None";
                     }
                 });
 
-            commandList.Add("adduser");
+            //admin only command so it isn't in the list
+            //commandList.Add("adduser");
             commands.CreateCommand("adduser")
                 .Parameter("UserId", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -575,7 +593,8 @@ You must be an administrator on the server to use this command";
                     }
                 });
 
-            commandList.Add("bonus");
+            //admin only command so it isn't in the list
+            //commandList.Add("bonus");
             commands.CreateCommand("bonus")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -602,8 +621,45 @@ You must be an administrator on the server to use this command";
                         int currentTokens = GetTokens(userId);
                         int newTokens = currentTokens + bonusTokens;
                         SetTokens(userId, newTokens);
-                        await e.Channel.SendMessage("User " + e.Server.GetUser(UInt64.Parse(userId)).Name + " has been given " + bonusTokens + @" bonus tokens.
-" + e.Server.GetUser(UInt64.Parse(userId)).Name + " now has " + newTokens + " tokens");
+                        await e.Channel.SendMessage("User " + e.Server.GetUser(UInt64.Parse(userId)).Name + " has been given " + string.Format("{0:n0}", bonusTokens) + @" bonus tokens.
+" + e.Server.GetUser(UInt64.Parse(userId)).Name + " now has " + string.Format("{0:n0}", newTokens) + " tokens");
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage("You do not have permission to use this command");
+                    }
+                });
+
+            //admin only command so it isn't in the list
+            //commandList.Add("take");
+            commands.CreateCommand("take")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    string desc = @"**Description:**
+Takes the specified amount of tokens from the specified user
+
+**Arguments:**
+`UserId` - The id of the user to be given the bonus tokens. A user's Id can be found by using !id
+`Tokens` - The amount of tokens to be taken from the user
+
+**Restrictions:**
+You must be an administrator on the server to use this command";
+                    string param = e.GetArg("param");
+                    if (param == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+                    else if (e.User.ServerPermissions.Administrator == true)
+                    {
+                        int spaceIndex = param.IndexOf(" ");
+                        string userId = param.Substring(0, spaceIndex);
+                        int bonusTokens = Int32.Parse(param.Substring(spaceIndex, param.Length - spaceIndex));
+                        int currentTokens = GetTokens(userId);
+                        int newTokens = currentTokens - bonusTokens;
+                        SetTokens(userId, newTokens);
+                        await e.Channel.SendMessage("User " + e.Server.GetUser(UInt64.Parse(userId)).Name + " has had " + string.Format("{0:n0}", bonusTokens) + @" tokens taken from them.
+" + e.Server.GetUser(UInt64.Parse(userId)).Name + " now has " + string.Format("{0:n0}", newTokens) + " tokens");
                     }
                     else
                     {
@@ -632,7 +688,7 @@ None";
                     {
                         int tokens = GetTokens(e.User.Id.ToString());
 
-                        await e.Channel.SendMessage("You have " + tokens + " tokens");
+                        await e.Channel.SendMessage("You have " + string.Format("{0:n0}", tokens) + " tokens");
                     }
                 });
 
@@ -668,9 +724,9 @@ You must possess the amount of tokens that you wish to give";
                         {
                             SetTokens(giveId, GetTokens(giveId) - tokens);
                             SetTokens(receiveId, GetTokens(receiveId) + tokens);
-                            await e.Channel.SendMessage("User " + e.User.Name + " has successfully given user with user id " + receiveId + " " + tokens + @" tokens.
-" + e.User.Name + " now has " + GetTokens(giveId) + @" tokens
-User with user id " + receiveId + " now has " + GetTokens(receiveId) + " tokens");
+                            await e.Channel.SendMessage("User " + e.User.Name + " has successfully given user with user id " + receiveId + " " + string.Format("{0:n0}", tokens) + @" tokens.
+" + e.User.Name + " now has " + string.Format("{0:n0}", GetTokens(giveId)) + @" tokens
+User with user id " + receiveId + " now has " + string.Format("{0:n0}", GetTokens(receiveId)) + " tokens");
                         }
                     }
                 });
@@ -1678,16 +1734,16 @@ None";
             {
                 newLogLines[i] = logLines[i];
             }
-            newLogLines[length] = Id;
             DateTime localDate = DateTime.Now;
-            if (newTokens > GetTokens(Id))
+            if (newTokens > oldTokens)
             {
-                newLogLines[length] = "+" + (newTokens - oldTokens) + ":" + GetTokens(Id) + ":" + localDate.ToString();
+                newLogLines[length] = Id.ToString() + ":" + GetTokens(Id) + ":" + "+" + (newTokens - oldTokens) + ":" + localDate.ToString();
             }
             else
             {
-                newLogLines[length] = "-" + (oldTokens - newTokens) + ":" + GetTokens(Id) + ":" + localDate.ToString();
+                newLogLines[length] = Id.ToString() + ":" + GetTokens(Id) + ":" + "-" + (oldTokens - newTokens) + ":" + localDate.ToString();
             }
+            File.WriteAllLines(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Log.txt", newLogLines);
         }
 
         private bool isRegistered(string userId)
