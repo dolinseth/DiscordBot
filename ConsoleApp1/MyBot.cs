@@ -250,8 +250,12 @@ The payouts are listed below:";
                         else
                         {
                             //weighted random number generator to make payouts lower
-                            double weight = 0.1; //higher values make it harder to get better rolls. 
-                                                  //0 is default
+                            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\weight.txt";
+                            double weight = double.Parse(File.ReadAllLines(fileAddress)[0]); 
+                            //set in the file listed above, not here
+                            //higher values make it harder to get better rolls. 
+                            //0 is default
+
                             double[] weights = new double[8];
                             double maxWeight = 0.0;
                             for (int i = 0; i < 8; i++)
@@ -263,10 +267,6 @@ The payouts are listed below:";
                             double num1 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 0, rnd)));
                             double num2 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 1, rnd)));
                             double num3 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 2, rnd)));
-                            Console.WriteLine("num1: " + num1);
-                            Console.WriteLine("num2: " + num2);
-                            Console.WriteLine("num3: " + num3);
-
 
                             // The original, unweighted, generator
                             /*double num1 = Math.Pow(2, rnd.Next(1, 9));
