@@ -227,15 +227,16 @@ Plays slots
 
 **Restrictions:**
 You must possess the amount of tokens that you wish to gamble
-To find the number of tokens that you possess, use `!tokens`";
+To find the number of tokens that you possess, use `!tokens`
+
+The payouts are listed below:";
 
                     ulong BetAmount = 0;
 
                     if (e.GetArg("BetAmount") == "help")
                     {
                         await e.Channel.SendMessage(desc);
-                        //the payouts I found online were making it too easy to gain tokens so I've lowered them from their original values
-                        //await e.Channel.SendFile(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Payouts.png");
+                        await e.Channel.SendFile(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Payouts.png");
                     }
                     else if (ulong.TryParse(e.GetArg("BetAmount"), out BetAmount))
                     {
@@ -246,10 +247,32 @@ To find the number of tokens that you possess, use `!tokens`";
                             SetTokens(e.User.Id.ToString(), tokens);
                             await e.Channel.SendMessage("Use the ***FUCKING*** slots channel for slots. For your infractions, your token count has been halved.");
                         }
-                        else {
-                            double num1 = Math.Pow(2, rnd.Next(1, 9));
+                        else
+                        {
+                            //weighted random number generator to make payouts lower
+                            double weight = 0.1; //higher values make it harder to get better rolls. 
+                                                  //0 is default
+                            double[] weights = new double[8];
+                            double maxWeight = 0.0;
+                            for (int i = 0; i < 8; i++)
+                            {
+                                weights[i] = 1 + (weight * (8 - i));
+                                maxWeight += weights[i];
+                            }
+
+                            double num1 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 0, rnd)));
+                            double num2 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 1, rnd)));
+                            double num3 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 2, rnd)));
+                            Console.WriteLine("num1: " + num1);
+                            Console.WriteLine("num2: " + num2);
+                            Console.WriteLine("num3: " + num3);
+
+
+                            // The original, unweighted, generator
+                            /*double num1 = Math.Pow(2, rnd.Next(1, 9));
                             double num2 = Math.Pow(2, rnd.Next(9, 17));
                             double num3 = Math.Pow(2, rnd.Next(17, 25));
+                            */
 
                             string Id = e.User.Id.ToString();
                             string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
@@ -257,7 +280,7 @@ To find the number of tokens that you possess, use `!tokens`";
                             ulong newTokens = 0;
                             if (!File.ReadAllText(FileAddress).Contains(Id))
                             {
-                                await e.Channel.SendMessage("You are not registered in the token database. Please contact a moderator to have them add you and give you starting tokens");
+                                await e.Channel.SendMessage("You are not registered in the token database. Please use `!register` to add yourself to the database");
                             }
                             else if (BetAmount > currentTokens)
                             {
@@ -408,35 +431,35 @@ To find the number of tokens that you possess, use `!tokens`";
                                 }
                                 else if ((num1 == 32 || num1 == 64 || num1 == 128 || num1 == 256) && (num2 == 8192 || num2 == 16384 || num2 == 32768 || num2 == 65536) && (num3 == 2097152 || num3 == 4194304 || num3 == 8388608 || num3 == 16777216))//Any 7, Any 7, Any 7
                                 {
-                                    BetReturn = BetAmount * 25;
+                                    BetReturn = BetAmount * 50;
                                 }
                                 else if (SlotValue == 1050628)//Red Bar, White Bar, Blue Bar
                                 {
-                                    BetReturn = BetAmount * 25;
+                                    BetReturn = BetAmount * 50;
                                 }
                                 else if (SlotValue == 1052688)//Blue Bar, Blue Bar, Blue Bar
                                 {
-                                    BetReturn = BetAmount * 20;
+                                    BetReturn = BetAmount * 40;
                                 }
                                 else if (SlotValue == 526344)//White Bar, White Bar, White Bar
                                 {
-                                    BetReturn = BetAmount * 10;
+                                    BetReturn = BetAmount * 20;
                                 }
                                 else if ((num1 == 4 || num1 == 32) && (num2 == 2048 || num2 == 16384) && (num3 == 1048576 || num3 == 8388608))//Any Red, Any White, Any Blue
                                 {
-                                    BetReturn = BetAmount * 10;
+                                    BetReturn = BetAmount * 20;
                                 }
                                 else if (SlotValue == 263172)//Red Bar, Red Bar, Red Bar
                                 {
-                                    BetReturn = BetAmount * 5;
+                                    BetReturn = BetAmount * 10;
                                 }
                                 else if ((num1 == 4 || num1 == 8 || num1 == 16) && (num2 == 1024 || num2 == 2048 || num2 == 4096) && (num3 == 252144 || num3 == 524288 || num3 == 1048576))//Any Bar, Any Bar, Any Bar
                                 {
-                                    BetReturn = BetAmount * 3;
+                                    BetReturn = BetAmount * 5;
                                 }
                                 else if ((num1 == 256 && (num2 == 65536 || num3 == 16777216)) || (num2 == 65536 && (num1 == 256 || num3 == 16777216)))//Contains 2 Flag 7's
                                 {
-                                    BetReturn = BetAmount * 3;
+                                    BetReturn = BetAmount * 5;
                                 }
                                 else if ((num1 == 4 || num1 == 32) && (num2 == 1024 || num2 == 8192) && (num3 == 262144 || num3 == 2097152))//Any Red, Any Red, Any Red
                                 {
@@ -930,6 +953,64 @@ Due to operator overflow errors in the calculation of the sequence, `TermNumber`
                     }
                 });
 
+            commandList.Add("shop");
+            commands.CreateCommand("shop")
+                .Parameter("choice", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Shop.txt";
+                    var lines = File.ReadAllLines(fileAddress);
+                    string arg = e.GetArg("choice");
+
+                    string desc = @"**Description:**
+Displays a shop that can be used to purchase things with the tokens that you earn on the slot machine
+
+**Arguments:**
+`ItemIndex` - The index of the item that you would like to purchase
+    This can also be `prices` to display the prices of the items for sale
+
+**Restrictions:**
+You must possess an amount of tokens equal to or greater than the price of the option that you would like to purchase";
+                    if (arg == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+
+                    else if (arg == "prices" || arg == null)
+                    {
+                        string prices = @"The prices of each item are as follows:
+";
+                        for (int i = 0; i < lines.Length - 1; i+=2)
+                        {
+                            prices += ((i / 2) + 1) + " :" + lines[i] + @":
+    " + lines[i + 1] + @"
+";
+                        }
+                        await e.Channel.SendMessage(prices);
+                    }
+                    else
+                    {
+                        ulong currentTokens = GetTokens(e.User.Id.ToString());
+                        ulong newTokens = 0;
+                        int spaceIndex = arg.IndexOf(' ');
+                        short itemIndex = short.Parse(arg.Substring(0, spaceIndex));
+                        if (itemIndex == 1)//TTS messages
+                        {
+                            ulong price = ulong.Parse(lines[(itemIndex * 2) - 1]);
+                            if (currentTokens < price)
+                            {
+                                await e.Channel.SendMessage("You do not have enough tokens to purchase this item.");
+                            }
+                            else
+                            {
+                                newTokens = currentTokens - price;
+                                await e.Channel.SendTTSMessage(e.User.Name + " says" + arg.Substring(spaceIndex));
+                                SetTokens(e.User.Id.ToString(), newTokens);
+                            }
+                        }
+                    }
+                });
+
             //Currently broken for message amounts over 100. Can't seem to get it to loop properly
             commands.CreateCommand("getmessages")
                 .Parameter("param", ParameterType.Unparsed)
@@ -1047,6 +1128,29 @@ None";
 				await discord.Connect("Mjk4NTk0NDQyNjAyODcyODM2.C8RnWg.QmRSfJ0atEkcwruNqFwqDwJJb_w", TokenType.Bot);
 			});
 		}
+
+        private int WeightedSelector(double[] weights, double maxWeight, int j, Random rnd)
+        {
+            double random;
+            int selection = -1;
+            double selectionStart = 0.0;
+            double selectionEnd = 0.0;
+            selectionEnd = weights[1];
+            random = rnd.NextDouble() * maxWeight;
+            Console.WriteLine("random = " + (random / maxWeight));
+            for (int i = 1; i < 8; i++)
+            {
+                if (random >= selectionStart && random < selectionEnd)
+                {
+                    selection = i;
+                    break;
+                }
+
+                selectionEnd += weights[i];
+                selectionStart += weights[i];
+            }
+            return (selection + 2 + (j * 8));
+        }
 
         private static BigInteger[] CalculateFibonacci(int n)
         {
