@@ -227,16 +227,15 @@ Plays slots
 
 **Restrictions:**
 You must possess the amount of tokens that you wish to gamble
-To find the number of tokens that you possess, use `!tokens`
-
-The payouts are shown below. If you believe that the payouts are being calculated incorrectly, please let me know.";
+To find the number of tokens that you possess, use `!tokens`";
 
                     ulong BetAmount = 0;
 
                     if (e.GetArg("BetAmount") == "help")
                     {
                         await e.Channel.SendMessage(desc);
-                        await e.Channel.SendFile(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Payouts.png");
+                        //the payouts I found online were making it too easy to gain tokens so I've lowered them from their original values
+                        //await e.Channel.SendFile(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Payouts.png");
                     }
                     else if (ulong.TryParse(e.GetArg("BetAmount"), out BetAmount))
                     {
@@ -389,7 +388,7 @@ The payouts are shown below. If you believe that the payouts are being calculate
                                 int SlotValue = System.Convert.ToInt32(num1) + System.Convert.ToInt32(num2) + System.Convert.ToInt32(num3);
                                 if (SlotValue == 16843008)//Flag 7, Flag 7, Flag 7
                                 {
-                                    BetReturn = BetAmount * 4000;
+                                    BetReturn = BetAmount * 1000;
                                 }
                                 else if (SlotValue == 8405024)//Red 7, White 7, Blue 7
                                 {
@@ -409,35 +408,35 @@ The payouts are shown below. If you believe that the payouts are being calculate
                                 }
                                 else if ((num1 == 32 || num1 == 64 || num1 == 128 || num1 == 256) && (num2 == 8192 || num2 == 16384 || num2 == 32768 || num2 == 65536) && (num3 == 2097152 || num3 == 4194304 || num3 == 8388608 || num3 == 16777216))//Any 7, Any 7, Any 7
                                 {
-                                    BetReturn = BetAmount * 50;
+                                    BetReturn = BetAmount * 25;
                                 }
                                 else if (SlotValue == 1050628)//Red Bar, White Bar, Blue Bar
                                 {
-                                    BetReturn = BetAmount * 50;
+                                    BetReturn = BetAmount * 25;
                                 }
                                 else if (SlotValue == 1052688)//Blue Bar, Blue Bar, Blue Bar
                                 {
-                                    BetReturn = BetAmount * 40;
+                                    BetReturn = BetAmount * 20;
                                 }
                                 else if (SlotValue == 526344)//White Bar, White Bar, White Bar
                                 {
-                                    BetReturn = BetAmount * 20;
+                                    BetReturn = BetAmount * 10;
                                 }
                                 else if ((num1 == 4 || num1 == 32) && (num2 == 2048 || num2 == 16384) && (num3 == 1048576 || num3 == 8388608))//Any Red, Any White, Any Blue
                                 {
-                                    BetReturn = BetAmount * 20;
+                                    BetReturn = BetAmount * 10;
                                 }
                                 else if (SlotValue == 263172)//Red Bar, Red Bar, Red Bar
                                 {
-                                    BetReturn = BetAmount * 10;
+                                    BetReturn = BetAmount * 5;
                                 }
                                 else if ((num1 == 4 || num1 == 8 || num1 == 16) && (num2 == 1024 || num2 == 2048 || num2 == 4096) && (num3 == 252144 || num3 == 524288 || num3 == 1048576))//Any Bar, Any Bar, Any Bar
                                 {
-                                    BetReturn = BetAmount * 5;
+                                    BetReturn = BetAmount * 3;
                                 }
                                 else if ((num1 == 256 && (num2 == 65536 || num3 == 16777216)) || (num2 == 65536 && (num1 == 256 || num3 == 16777216)))//Contains 2 Flag 7's
                                 {
-                                    BetReturn = BetAmount * 5;
+                                    BetReturn = BetAmount * 3;
                                 }
                                 else if ((num1 == 4 || num1 == 32) && (num2 == 1024 || num2 == 8192) && (num3 == 262144 || num3 == 2097152))//Any Red, Any Red, Any Red
                                 {
@@ -1031,13 +1030,15 @@ None";
             commands.CreateCommand("help")
                 .Do(async (e) =>
                 {
-                    string list = @"**Available commands** (prefix with '!'): :BRook:
+                    string list = @"**Available commands** (prefix with '!'):
 ";
                     for(int i = 0; i < commandList.ToArray().Length; i++)
                     {
                         list += "`" + commandList[i] + @"`
 ";
                     }
+                    list += @"To get help with a specific command, type
+`!commandname help`";
                         await e.Channel.SendMessage(list);
                 });
 
