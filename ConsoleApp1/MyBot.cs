@@ -239,7 +239,7 @@ The payouts are listed below:";
                         await e.Channel.SendMessage(desc);
                         await e.Channel.SendFile(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Payouts.png");
                     }
-                    else if (ulong.TryParse(e.GetArg("BetAmount"), out BetAmount))
+                    else if (ulong.TryParse(e.GetArg("BetAmount"), out BetAmount) || e.GetArg("BetAmount") == "max")
                     {
                         if (e.Channel.Id.ToString() == "308360449509031936")
                         {
@@ -282,6 +282,11 @@ The payouts are listed below:";
                             string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
                             ulong currentTokens = GetTokens(Id);
                             ulong newTokens = 0;
+                            if (e.GetArg("BetAmount") == "max")
+                            {
+                                BetAmount = currentTokens;
+                            }
+
                             if (!File.ReadAllText(FileAddress).Contains(Id))
                             {
                                 await e.Channel.SendMessage("You are not registered in the token database. Please use `!register` to add yourself to the database");
