@@ -1,20 +1,21 @@
-﻿using System;
+﻿//certain using directives have been commented out because they are part of a feature that is currently non functional and that I don't feel like fixing
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
+//using System.Text;
+//using System.Threading.Tasks;
+//using System.Web;
 using Discord;
 using Discord.Commands;
 using Discord.Audio;
-using NAudio;
+//using NAudio;
 using NAudio.Wave;
-using NAudio.CoreAudioApi;
-using VideoLibrary;
-using EmergenceGuardian;
-using System.Diagnostics;
+//using NAudio.CoreAudioApi;
+//using VideoLibrary;
+//using EmergenceGuardian;
+//using System.Diagnostics;
 using YoutubeExtractor;
 
 namespace ConsoleApp1
@@ -254,19 +255,22 @@ The payouts are listed below:";
                             double weight = double.Parse(File.ReadAllLines(fileAddress)[0]); 
                             //set in the file listed above, not here
                             //higher values make it harder to get better rolls. 
-                            //0 is default
+                            //1 is default
 
                             double[] weights = new double[8];
                             double maxWeight = 0.0;
                             for (int i = 0; i < 8; i++)
                             {
-                                weights[i] = 1 + (weight * (8 - i));
+                                weights[i] = (weight * (8 - i));
                                 maxWeight += weights[i];
                             }
 
                             double num1 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 0, rnd)));
                             double num2 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 1, rnd)));
                             double num3 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 2, rnd)));
+                            /*Console.WriteLine("num1: " + num1);
+                            Console.WriteLine("num2: " + num2);
+                            Console.WriteLine("num3: " + num3);*/
 
                             // The original, unweighted, generator
                             /*double num1 = Math.Pow(2, rnd.Next(1, 9));
@@ -1137,8 +1141,8 @@ None";
             double selectionEnd = 0.0;
             selectionEnd = weights[1];
             random = rnd.NextDouble() * maxWeight;
-            Console.WriteLine("random = " + (random / maxWeight));
-            for (int i = 1; i < 8; i++)
+            //Console.WriteLine("random = " + (random / maxWeight));
+            for (int i = 1; i < 9; i++)
             {
                 if (random >= selectionStart && random < selectionEnd)
                 {
@@ -1149,7 +1153,7 @@ None";
                 selectionEnd += weights[i];
                 selectionStart += weights[i];
             }
-            return (selection + 2 + (j * 8));
+            return (selection + (j * 8));
         }
 
         private static BigInteger[] CalculateFibonacci(int n)
