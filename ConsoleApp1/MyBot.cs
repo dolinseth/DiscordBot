@@ -1208,7 +1208,7 @@ None";
             Console.WriteLine(log);
             string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Log.txt";
             var lines = File.ReadAllLines(fileAddress);
-            string[] newLines = new string[lines.Length];
+            string[] newLines = new string[lines.Length + 1];
             for (int i = 0; i < lines.Length; i++)
             {
                 newLines[i] = lines[i];
