@@ -1050,6 +1050,8 @@ You must possess an amount of tokens equal to or greater than the price of the o
                             }
                             else
                             {
+                                var messages = await e.Channel.DownloadMessages(1);
+                                await e.Channel.DeleteMessages(messages);
                                 newTokens = currentTokens - price;
                                 await e.Channel.SendTTSMessage(e.User.Name + " says" + arg.Substring(spaceIndex));
                                 SetTokens(e.User.Id.ToString(), newTokens);
