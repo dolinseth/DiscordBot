@@ -54,7 +54,7 @@ namespace ConsoleApp1
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command whiteboard for user " + e.User.Name);
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command whiteboard for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name);
 
                     string desc = @"**Description:**
 Sends the link to the whiteboard web app
@@ -80,7 +80,7 @@ None";
                 .Parameter("RequestedName", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command verify for user " + e.User.Name + " with parameter " + e.GetArg("RequestedName"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command verify for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("RequestedName"));
 
                     string desc = @"**Description:**
 Sets the user's server wide nickname to the requested name
@@ -113,7 +113,7 @@ Can only be used in the verification channel";
                 .Parameter("NumberOfMessages", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command purge for user " + e.User.Name + " with parameter " + e.GetArg("NumberOfMessages"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command purge for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("NumberOfMessages"));
 
                     string desc = @"**Description:**
 Purges the specified number of messages from the channel
@@ -157,7 +157,7 @@ Can only be used by users with administrator permissions on the server";
                 .Parameter("RawInput", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command math for user " + e.User.Name + " with parameter " + e.GetArg("RawInput"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command math for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("RawInput"));
 
                     string desc = @"**Description:**
 Queries Wolfram Alpha with the given parameter and returns the response as a .gif file sent in chat
@@ -194,7 +194,7 @@ None";
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command roulette for user " + e.User.Name);
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command roulette for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name);
 
                     string desc = @"**Description:**
 Plays Russian Roulette
@@ -230,7 +230,7 @@ None";
                 .Parameter("BetAmount", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command slots for user " + e.User.Name + " with parameter " + e.GetArg("BetAmount"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command slots for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("BetAmount"));
 
                     string desc = @"**Description:**
 Plays slots
@@ -540,7 +540,7 @@ The payouts are listed below:";
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command id for user " + e.User.Name);
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command id for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name);
 
                     string desc = @"**Description:**
 Gets the user id of the user that used the command
@@ -569,7 +569,7 @@ None";
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command register for user " + e.User.Name);
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command register for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name);
 
                     string desc = @"**Description:**
 Registers the user in the token database
@@ -606,7 +606,7 @@ None";
                 .Parameter("UserId", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command adduser for user " + e.User.Name + " with parameter " + e.GetArg("UserId"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command adduser for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("UserId"));
 
                     string desc = @"**Description:**
 Adds a user to the token database
@@ -648,7 +648,7 @@ You must be an administrator on the server to use this command";
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command bonus for user " + e.User.Name + " with parameter " + e.GetArg("param"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command bonus for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("param"));
 
                     string desc = @"**Description:**
 Gives the specified amount of bonus tokens to the specified user
@@ -687,7 +687,7 @@ You must be an administrator on the server to use this command";
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command take for user " + e.User.Name + " with parameter " + e.GetArg("param"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command take for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("param"));
 
                     string desc = @"**Description:**
 Takes the specified amount of tokens from the specified user
@@ -725,7 +725,7 @@ You must be an administrator on the server to use this command";
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command tokens for user " + e.User.Name);
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command tokens for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name);
 
                     string desc = @"**Description:**
 Gets the token count for the user that uses it
@@ -752,7 +752,7 @@ None";
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command give for user " + e.User.Name + " with parameter " + e.GetArg("param"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command give for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("param"));
 
                     string desc = @"**Description:**
 Gives the specified user the specified amount of tokens from the bank of the user that used the command
@@ -781,7 +781,7 @@ You must possess the amount of tokens that you wish to give";
                         {
                             SetTokens(giveId, GetTokens(giveId) - tokens);
                             SetTokens(receiveId, GetTokens(receiveId) + tokens);
-                            await e.Channel.SendMessage("User " + e.User.Name + " has successfully given user with user id " + receiveId + " " + string.Format("{0:n0}", tokens) + @" tokens.
+                            await e.Channel.SendMessage("user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " has successfully given user with user id " + receiveId + " " + string.Format("{0:n0}", tokens) + @" tokens.
 " + e.User.Name + " now has " + string.Format("{0:n0}", GetTokens(giveId)) + @" tokens
 User with user id " + receiveId + " now has " + string.Format("{0:n0}", GetTokens(receiveId)) + " tokens");
                         }
@@ -793,7 +793,7 @@ User with user id " + receiveId + " now has " + string.Format("{0:n0}", GetToken
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command chess for user " + e.User.Name + " with parameter " + e.GetArg("param"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command chess for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("param"));
 
                     string desc = @"**Description:**
 Makes an ASCII chess board which can be edited or displayed using this command
@@ -939,7 +939,7 @@ None";
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command serverid for user " + e.User.Name);
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command serverid for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name);
 
                     await e.Channel.SendMessage(e.Server.Id.ToString());
                 });
@@ -949,7 +949,7 @@ None";
                 .Parameter("termNumber", ParameterType.Unparsed)
                 .Do(async (e) => 
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command lucas for user " + e.User.Name + " with parameter " + e.GetArg("termNumber"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command lucas for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("termNumber"));
 
                     string arg = e.GetArg("termNumber");
                     string desc = @"**Description:**
@@ -976,7 +976,7 @@ Due to operator overflow errors in the calculation of the sequence, `TermNumber`
                 .Parameter("termNumber", ParameterType.Unparsed)
                 .Do(async (e) => 
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command fibonacci for user " + e.User.Name + " with parameter " + e.GetArg("termNumber"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command fibonacci for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("termNumber"));
 
                     string arg = e.GetArg("termNumber");
                     string desc = @"**Description:**
@@ -1003,7 +1003,7 @@ Due to operator overflow errors in the calculation of the sequence, `TermNumber`
                 .Parameter("choice", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command shop for user " + e.User.Name + " with parameter " + e.GetArg("choice"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command shop for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("choice"));
 
                     string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Shop.txt";
                     var lines = File.ReadAllLines(fileAddress);
@@ -1060,12 +1060,37 @@ You must possess an amount of tokens equal to or greater than the price of the o
                     }
                 });
 
+            commandList.Add("typeracer");
+            commands.CreateCommand("typeracer")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command typeracer for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name);
+
+                    string desc = @"**Description:**
+Sends a link to Seth's typeracer scorecard
+
+**Arguments:**
+None
+
+**Restrictions:**
+None";
+                    if (e.GetArg("param") == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage("http://data.typeracer.com/misc/badge?user=_the_bacon");
+                    }
+                });
+
             //Currently broken for message amounts over 100. Can't seem to get it to loop properly
             commands.CreateCommand("getmessages")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command getmessages for user " + e.User.Name + " with parameter " + e.GetArg("param"));
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command getmessages for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name +  " with parameter " + e.GetArg("param"));
 
                     if (e.User.Id == 193399026748620800)
                     {
@@ -1162,7 +1187,7 @@ None";
             commands.CreateCommand("help")
                 .Do(async (e) =>
                 {
-                    LogCommand(DateTime.Now.ToString() + ": Now executing command help for user " + e.User.Name);
+                    LogCommand(DateTime.Now.ToString() + ": Now executing command help for user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name);
 
                     string list = @"**Available commands** (prefix with '!'):
 ";
