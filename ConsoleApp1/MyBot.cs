@@ -1216,6 +1216,10 @@ None";
             username = username.ToUpper();
             channel = channel.ToUpper();
             server = server.ToUpper();
+            if (param == "" || param == null)
+            {
+                param = "NULL";
+            }
             log = DateTime.Now.ToString() + ": Now executing command " + command + " for user " + username + " in channel " + channel + " in server " + server + " with parameter " + param;
             Console.WriteLine(log);
             string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Log.txt";
