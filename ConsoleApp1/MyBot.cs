@@ -1062,7 +1062,206 @@ You must possess an amount of tokens equal to or greater than the price of the o
                     }
                 });
 
-            commandList.Add("typeracer");
+            commandList.Add("hangman");
+            commands.CreateCommand("hangman")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    LogCommand("hangman", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
+
+                    string arg = e.GetArg("param");
+                    string desc = @"**Description:**
+Plays ASCII hangman
+
+**Arguments:**
+`Action` - The action that you would like to take. Can be `create`, `guess`, `display`, or `guessword`
+`Guess` - The letter or word that you would like to guess. Only necessary for actions `guess` and `guessword`
+
+**Restrictions:**
+Action `create` can only be used by server administrators
+Only one game can exist at a time on for each server
+
+**Note:**
+It is recommended that you create the game in a channel separate to where you intend to play it, that way players will be unable to see the secret word before the bot deletes it";
+                    if (arg == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+                    else
+                    {
+                        string sId = e.Server.Id.ToString();
+                        int spaceIndex1 = GetNthIndex(arg, ' ', 1);
+                        //int spaceIndex2 = GetNthIndex(arg, ' ', 2);
+                        //int spaceIndex3 = GetNthIndex(arg, ' ', 3);
+                        string action;
+                        if (spaceIndex1 == -1)
+                        {
+                            action = arg;
+                        }
+                        else
+                        {
+                            action = arg.Substring(0, spaceIndex1);
+                        }
+                        if (action == "create")
+                        {
+                            if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == "193399026748620800")
+                            {
+                                await e.Channel.DeleteMessages(await e.Channel.DownloadMessages(1));
+
+                                string word = arg.Substring(spaceIndex1 + 1, arg.Length - spaceIndex1 - 1);
+                                CreateHangman(sId, word);
+                                await e.Channel.SendMessage("Hangman game successfully created");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage("You do not have permission to use this command.");
+                            }
+                        }
+                        else if (action == "display")
+                        {
+                            int numOfFails = GetHangmanFailCount(sId);
+                            char[] guessed = GetHangmanGuessed(sId);
+                            string answer = GetHangmanAnswer(sId);
+                            string Hangman = @"**Hangman Game**
+";
+                            for (int i = 0; i < guessed.Length; i++)
+                            {
+                                if (guessed[i] == ' ')
+                                {
+                                    Hangman += "◯";
+                                }
+                                else
+                                {
+                                    Hangman += answer[i];
+                                }
+                            }
+                            Hangman += @"
+";
+                            
+                            Hangman += DrawHangman(numOfFails);
+
+                            await e.Channel.SendMessage(Hangman);
+                        }
+                        else if (action == "guess")
+                        {
+                            char letter = arg.Substring(spaceIndex1 + 1, arg.Length - spaceIndex1 - 1).ToUpper().ToCharArray()[0];
+                            if (arg.Substring(spaceIndex1 + 1).Length != 1)
+                            {
+                                await e.Channel.SendMessage("Too many letters. To guess the whole word, use `!hangman guessword`");
+                            }
+                            else
+                            {
+                                char[] guessed = GetHangmanGuessed(sId);
+                                string answer = GetHangmanAnswer(sId);
+                                int numOfFails = GetHangmanFailCount(sId);
+                                bool correct = false;
+                                for (int i = 0; i < answer.Length; i++)
+                                {
+                                    if (answer[i] == letter)
+                                    {
+                                        correct = true;
+                                        guessed[i] = letter;
+                                    }
+                                }
+
+                                if (!correct)
+                                {
+                                    numOfFails++;
+                                }
+
+                                SetHangman(sId, answer, guessed, numOfFails);
+
+                                string Hangman = @"**Hangman Game**
+";
+                                Hangman += e.User.Name + " has guessed " + letter + @"
+";
+                                for (int i = 0; i < guessed.Length; i++)
+                                {
+                                    if (guessed[i] == ' ')
+                                    {
+                                        Hangman += "◯";
+                                    }
+                                    else
+                                    {
+                                        Hangman += answer[i];
+                                    }
+                                }
+                                Hangman += @"
+";
+                                Hangman += DrawHangman(numOfFails);
+                                string guessedString = "";
+                                for (int i = 0; i < guessed.Length; i++)
+                                {
+                                    guessedString += guessed[i];
+                                }
+                                Console.WriteLine(guessedString);
+                                if (guessedString == answer)
+                                {
+                                    int reward = GetHangmanReward(sId);
+                                    SetTokens(e.User.Id.ToString(), GetTokens(e.User.Id.ToString()) + (ulong)reward);
+                                    Hangman += @"
+" + e.User.Name + @" has won and been awarded " + reward + @" tokens.
+" + e.User.Name + " now has " + GetTokens(e.User.Id.ToString()) + " tokens.";
+
+                                    DeleteHangman(sId);
+                                }
+                                else if (numOfFails == 6)
+                                {
+                                    Hangman += @"
+You lose and the man has been hanged!";
+                                    DeleteHangman(sId);
+                                }
+
+                                await e.Channel.SendMessage(Hangman);
+                            }
+                        }
+                        else if (action == "guessword")
+                        {
+                            string word = arg.Substring(spaceIndex1 + 1, arg.Length - spaceIndex1 - 1);
+                            string answer = GetHangmanAnswer(sId);
+                            if (word.ToUpper() == answer)
+                            {
+                                string Hangman = @"**Hangman Game**
+";
+                                Hangman += e.User.Name + " has guessed " + word + @"
+";
+                                Hangman += answer + @"
+";
+                                Hangman += DrawHangman(GetHangmanFailCount(sId));
+                                Hangman += @"
+" + e.User.Name + " has won!";
+                            }
+                            else
+                            {
+                                char[] guessed = GetHangmanGuessed(sId);
+                                int numOfFails = GetHangmanFailCount(sId);
+                                numOfFails++;
+                                string Hangman = @"**Hangman Game**
+";
+                                Hangman += e.User.Name + " has guessed " + word + @"
+";
+                                for (int i = 0; i < guessed.Length; i++)
+                                {
+                                    if (guessed[i] == ' ')
+                                    {
+                                        Hangman += "◯";
+                                    }
+                                    else
+                                    {
+                                        Hangman += answer[i];
+                                    }
+                                }
+                                Hangman += @"
+";
+                                SetHangman(sId, answer, guessed, numOfFails);
+                                Hangman += DrawHangman(numOfFails);
+                            }
+                        }
+
+                    }
+                });
+
+            //commandList.Add("typeracer");
             commands.CreateCommand("typeracer")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -1123,7 +1322,7 @@ None";
 
             //commandList.Add("play");
             //Currently broken. Need to figure out how to get the audio downloader to extract the audio properly, then it should work fine from there
-            commands.CreateCommand("play")
+            commands.CreateCommand("BROKENRIGHTNOWDONTUSEPLEASEKTHXBYE")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
@@ -1189,10 +1388,11 @@ None";
             commands.CreateCommand("help")
                 .Do(async (e) =>
                 {
-                    LogCommand("help", e.User.Name, e.Channel.Name, e.Server.Name, "none");
+                    LogCommand("help", e.User.Name, e.Channel.Name, e.Server.Name, "NULL");
 
                     string list = @"**Available commands** (prefix with '!'):
 ";
+                    commandList.Sort();
                     for (int i = 0; i < commandList.ToArray().Length; i++)
                     {
                         list += "`" + commandList[i] + @"`
@@ -1201,6 +1401,14 @@ None";
                     list += @"To get help with a specific command, type
 `!commandname help`";
                     await e.Channel.SendMessage(list);
+                });
+
+            commands.CreateCommand("aoeuaoeu")
+                .Do(async (e) =>
+                {
+                    //Use this command for testing things.
+
+                    await e.Channel.SendMessage("done");
                 });
 
             discord.ExecuteAndWait(async () =>
@@ -1648,7 +1856,7 @@ None";
 
         private void CreateBoard(string boardName)
         {
-            char[,] board = { {'8', '7', '0', '0', '0', '0', '1', '2'}, { '9', '7', '0', '0', '0', '0', '1', '3' }, { 'a', '7', '0', '0', '0', '0', '1', '4' }, { 'c', '7', '0', '0', '0', '0', '1', '6' }, { 'b', '7', '0', '0', '0', '0', '1', '5' }, { 'a', '7', '0', '0', '0', '0', '1', '4' }, { '9', '7', '0', '0', '0', '0', '1', '3' }, { '8', '7', '0', '0', '0', '0', '1', '2' }};
+            char[,] board = { { '8', '7', '0', '0', '0', '0', '1', '2' }, { '9', '7', '0', '0', '0', '0', '1', '3' }, { 'a', '7', '0', '0', '0', '0', '1', '4' }, { 'c', '7', '0', '0', '0', '0', '1', '6' }, { 'b', '7', '0', '0', '0', '0', '1', '5' }, { 'a', '7', '0', '0', '0', '0', '1', '4' }, { '9', '7', '0', '0', '0', '0', '1', '3' }, { '8', '7', '0', '0', '0', '0', '1', '2' } };
 
             string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
             var lines = File.ReadAllLines(FileAddress);
@@ -1735,7 +1943,7 @@ None";
 
         private char[,] GetBoard(string boardName)
         {
-            char[,] board = new char[8,8];
+            char[,] board = new char[8, 8];
             string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
             StreamReader sr = new StreamReader(FileAddress);
             string line = "";
@@ -1770,11 +1978,11 @@ None";
             string[] emojiCodes = { };
             if (serverId == "293460412593209345")
             {
-                emojiCodes = new string[] { "<:Blank:298949936475537430>", "<:WPawn:298949937155276800>", "<:WRook:298949937498947584>", "<:WKnight:298949937121591297>", "<:WBishop:298949937050288128>", "<:WKing:298949936836247584>", "<:WQueen:298949937398546433>", "<:BPawn:298949936362422275>", "<:BRook:298949936651698177>", "<:BKnight:298949936341319684>", "<:BBishop:298949936236724225>", "<:BKing:298949936676864030>", "<:BQueen:298949936949493760>"};
+                emojiCodes = new string[] { "<:Blank:298949936475537430>", "<:WPawn:298949937155276800>", "<:WRook:298949937498947584>", "<:WKnight:298949937121591297>", "<:WBishop:298949937050288128>", "<:WKing:298949936836247584>", "<:WQueen:298949937398546433>", "<:BPawn:298949936362422275>", "<:BRook:298949936651698177>", "<:BKnight:298949936341319684>", "<:BBishop:298949936236724225>", "<:BKing:298949936676864030>", "<:BQueen:298949936949493760>" };
             }
             else if (serverId == "237688211420217344")
             {
-                emojiCodes = new string[] { "<:Blank:298927119562571777>", "<:WPawn:298602840694325248>", "<:WRook:298602840706777088>", "<:WKnight:298602840824479754>", "<:WBishop:298602840304254978>", "<:WKing:298602840333615106>", "<:WQueen:298602840916623370>", "<:BPawn:298602840488804362>", "<:BRook:298602840249860102>", "<:BKnight:298602840295735306>", "<:BBishop:298602839805263875>", "<:BKing:298602840207917056>", "<:BQueen:298602840027561985>"};
+                emojiCodes = new string[] { "<:Blank:298927119562571777>", "<:WPawn:298602840694325248>", "<:WRook:298602840706777088>", "<:WKnight:298602840824479754>", "<:WBishop:298602840304254978>", "<:WKing:298602840333615106>", "<:WQueen:298602840916623370>", "<:BPawn:298602840488804362>", "<:BRook:298602840249860102>", "<:BKnight:298602840295735306>", "<:BBishop:298602839805263875>", "<:BKing:298602840207917056>", "<:BQueen:298602840027561985>" };
             }
             else if (serverId == "308360449509031936")
             {
@@ -1872,9 +2080,9 @@ None";
         }
 
         private void Log(object sender, LogMessageEventArgs e)
-		{
-			Console.WriteLine(e.Message);
-		}
+        {
+            Console.WriteLine(e.Message);
+        }
 
         private ulong GetTokens(string userId)
         {
@@ -1895,7 +2103,7 @@ None";
             line = sr.ReadLine();
             currentTokens = ulong.Parse(line);
             sr.Close();
-            
+
             return currentTokens;
         }
 
@@ -1976,6 +2184,208 @@ None";
                 selectionStart += weights[i];
             }
             return (selection + (j * 8));
+        }
+
+        private string DrawHangman(int numOfFails)
+        {
+            string[] hangman = new string[7];
+            hangman[0] = ". ┌─────┐";
+            hangman[1] = ".┃...............┋";
+            hangman[2] = ".┃...............┋";
+            hangman[3] = ".┃";
+            hangman[4] = ".┃";
+            hangman[5] = ".┃";
+            hangman[6] = @"/-\";
+
+            if (numOfFails > 0)
+            {
+                hangman[3] = ".┃.............😲";
+            }
+            if (numOfFails > 1)
+            {
+                hangman[4] = ".┃............./";
+            }
+            if (numOfFails > 2)
+            {
+                hangman[4] = ".┃............./ |";
+            }
+            if (numOfFails > 3)
+            {
+                hangman[4] = ".┃............./ | \\";
+            }
+            if (numOfFails > 4)
+            {
+                hangman[5] = ".┃............../";
+            }
+            if (numOfFails > 5)
+            {
+                hangman[5] = ".┃............../ \\";
+            }
+
+            string result = hangman[0] + @"
+" + hangman[1] + @"
+" + hangman[2] + @"
+" + hangman[3] + @"
+" + hangman[4] + @"
+" + hangman[5] + @"
+" + hangman[6];
+
+            return result;
+        }
+
+        private void CreateHangman(string name, string word, int reward = 10000)
+        {
+            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            var lines = File.ReadAllLines(fileAddress);
+            string[] newLines = new string[lines.Length + 2];
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                newLines[i] = lines[i];
+            }
+
+            newLines[lines.Length] = name + ":" + word.ToUpper() + ":" + reward + ":0";
+            string guessed = "";
+            for (int i = 0; i < word.Length; i++)
+            {
+                guessed += " ";
+            }
+            newLines[lines.Length + 1] = guessed;
+            File.WriteAllLines(fileAddress, newLines);
+        }
+
+        private string GetHangmanAnswer(string name)
+        {
+            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            var lines = File.ReadAllLines(fileAddress);
+            int lineNum = 0;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].Contains(name))
+                {
+                    lineNum = i;
+                }
+            }
+            string result = lines[lineNum];
+            int colonIndex1 = GetNthIndex(result, ':', 1);
+            int colonIndex2 = GetNthIndex(result, ':', 2);
+            result = result.Substring(colonIndex1 + 1, colonIndex2 - colonIndex1 - 1);
+
+            return result;
+        }
+
+        private char[] GetHangmanGuessed(string name)
+        {
+            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            var lines = File.ReadAllLines(fileAddress);
+            int lineNum = 0;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].Contains(name))
+                {
+                    lineNum = i;
+                }
+            }
+
+            string s = lines[lineNum + 1];
+            char[] guessed = new char[s.Length];
+            for (int i = 0; i < s.Length; i++)
+            {
+                guessed[i] = s[i];
+            }
+            return guessed;
+        }
+
+        private int GetHangmanFailCount(string name)
+        {
+            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            var lines = File.ReadAllLines(fileAddress);
+            int lineNum = 0;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].Contains(name))
+                {
+                    lineNum = i;
+                }
+            }
+
+            string s = lines[lineNum];
+            int result = Int32.Parse(s.Substring(s.Length - 1));
+            return result;
+        }
+
+        private void SetHangman(string name, string word, char[] guessed, int numOfFails, int reward = 10000)
+        {
+            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            var lines = File.ReadAllLines(fileAddress);
+            int lineNum = 0;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].Contains(name))
+                {
+                    lineNum = i;
+                }
+            }
+
+            string guessedString = "";
+            for (int i = 0; i < guessed.Length; i++)
+            {
+                guessedString += guessed[i];
+            }
+            lines[lineNum] = name + ":" + word.ToUpper() + ":" + reward + ":" + numOfFails;
+            lines[lineNum + 1] = guessedString;
+
+            File.WriteAllLines(fileAddress, lines);
+        }
+
+        private int GetHangmanReward(string name)
+        {
+            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            var lines = File.ReadAllLines(fileAddress);
+            int lineNum = 0;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].Contains(name))
+                {
+                    lineNum = i;
+                }
+            }
+
+            string s = lines[lineNum];
+            int colonIndex1 = GetNthIndex(s, ':', 2);
+            int colonIndex2 = GetNthIndex(s, ':', 3);
+
+            string result = s.Substring(colonIndex1 + 1, colonIndex2 - colonIndex1 - 1);
+            Console.WriteLine(result);
+            return Int32.Parse(result);
+        }
+
+        private void DeleteHangman(string name)
+        {
+            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            var lines = File.ReadAllLines(fileAddress);
+            int lineNum = 0;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].Contains(name))
+                {
+                    lineNum = i;
+                }
+            }
+
+            int length = lines.Length;
+            string[] newLines = new string[length - 2];
+
+            for (int i = 0; i < lineNum; i++)
+            {
+                newLines[i] = lines[i];
+            }
+            for (int i = lineNum; i < length - 2; i++)
+            {
+                newLines[i] = lines[i + 2];
+            }
+
+            File.WriteAllLines(fileAddress, newLines);
         }
     }
 }
