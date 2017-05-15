@@ -1194,7 +1194,6 @@ It is recommended that you create the game in a channel separate to where you in
                                 {
                                     guessedString += guessed[i];
                                 }
-                                Console.WriteLine(guessedString);
                                 if (guessedString == answer)
                                 {
                                     int reward = GetHangmanReward(sId);
@@ -1317,71 +1316,6 @@ None";
 
 
                         File.WriteAllLines(fileAddress, lines);
-                    }
-                });
-
-            //commandList.Add("play");
-            //Currently broken. Need to figure out how to get the audio downloader to extract the audio properly, then it should work fine from there
-            commands.CreateCommand("BROKENRIGHTNOWDONTUSEPLEASEKTHXBYE")
-                .Parameter("param", ParameterType.Unparsed)
-                .Do(async (e) =>
-                {
-                    string arg = e.GetArg("param");
-                    string desc = @"**Description:**
-Plays the audio from a given YouTube video
-
-**Arguments:**
-`Link` - The link to the YouTube video whose audio you wish to play
-
-**Restrictions:**
-None";
-                    if (arg == "help")
-                    {
-                        await e.Channel.SendMessage(desc);
-                    }
-                    else
-                    {
-                        //when you fix this, remember to uncomment the commandList.Add thing at the top
-                        string filePath = @"C:\users\Seth Dolin\Desktop\Physicsbot\Music\Song.mp3";
-                        IEnumerable<VideoInfo> videoInfos = DownloadUrlResolver.GetDownloadUrls(arg);
-                        VideoInfo video = videoInfos.First();
-                        var audioDownloader = new AudioDownloader(video, filePath);
-                        await e.Channel.SendMessage("Got to point 1");
-                        audioDownloader.DownloadProgressChanged += (sender, args) => Console.WriteLine(args.ProgressPercentage * 0.85);
-                        audioDownloader.AudioExtractionProgressChanged += (sender, args) => Console.WriteLine(85 + args.ProgressPercentage * 0.15);
-                        await e.Channel.SendMessage("Got to point 2");
-                        //completes the download just fine, can't seem to extract for some reason
-                        audioDownloader.Execute();
-
-                        var voiceChannel = e.User.VoiceChannel;
-                        await discord.GetService<AudioService>().Join(voiceChannel);
-                        var _vClient = e.Server.GetAudioClient();
-                        await _vClient.Join(voiceChannel);
-
-                        var channelCount = discord.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
-                        var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
-                        using (var MP3Reader = new Mp3FileReader(filePath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
-                        using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
-                        {
-                            resampler.ResamplerQuality = 60; // Set the quality of the resampler to 60, the highest quality
-                            int blockSize = OutFormat.AverageBytesPerSecond / 50; // Establish the size of our AudioBuffer
-                            byte[] buffer = new byte[blockSize];
-                            int byteCount;
-
-                            while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0) // Read audio into our buffer, and keep a loop open while data is present
-                            {
-                                if (byteCount < blockSize)
-                                {
-                                    // Incomplete Frame
-                                    for (int i = byteCount; i < blockSize; i++)
-                                        buffer[i] = 0;
-                                }
-                                _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
-                            }
-                        }
-
-                        System.Threading.Thread.Sleep(5000);
-                        await discord.GetService<AudioService>().Leave(e.Server);
                     }
                 });
 
