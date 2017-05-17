@@ -1271,7 +1271,7 @@ You lose and the man has been hanged!";
 ASCII checkers. Doesn't get much more complicated than that
 
 **Arguments:**
-`Action` - The action to take. Can be `create`, `move`, `display`, `delete`, or `checkmate`
+`Action` - The action to take. Can be `create`, `move`, `display`, or `delete`
 `BoardName` - The name of the board which you want to edit or display. Set when the board is created
 `Square1` - The location of the piece that you would like to move. Given in the format LetterNumber. e.g. A6. Not necessary for actions `create`, `display`, and `delete`
 `Square2` - The location that you would like to move the selected piece to. Given in the format LetterNumber. e.g. A6. Not necessary for actions `create`, `display`, and `delete`
@@ -1284,7 +1284,95 @@ None";
                     {
                         await e.Channel.SendMessage(desc);
                     }
+                    else
+                    {
+                        int spaceIndex1 = GetNthIndex(arg, ' ', 1);
+                        int spaceIndex2 = GetNthIndex(arg, ' ', 2);
+                        int spaceIndex3 = GetNthIndex(arg, ' ', 3);
+                        string action = arg.Substring(0, spaceIndex1);
+                        char[,] board = new char[8, 8];
 
+                        if (action == "create")
+                        {
+                            string boardName = arg.Substring(spaceIndex1 + 1, arg.Length - spaceIndex1 - 1);
+                            CreateCheckersBoard(boardName);
+
+                            await e.Channel.SendMessage("Checkers board with name " + boardName + " successfully created");
+                        }
+                        else if (action == "display")
+                        {
+                            string boardName = arg.Substring(spaceIndex1 + 1, arg.Length - spaceIndex1 - 1);
+                            await e.Channel.SendMessage("**Board: **" + boardName + @"
+" + CheckersBoardToString1(boardName, e.Server.Id.ToString()));
+                            await e.Channel.SendMessage(CheckersBoardToString2(boardName, e.Server.Id.ToString()));
+                            await e.Channel.SendMessage("It is now `" + (isWhitesTurn(boardName) ? "red's" : "blue's") + "` turn");
+                        }
+                        else if (action == "move")
+                        {
+                            string boardName = arg.Substring(spaceIndex1 + 1, arg.Length - (7 + spaceIndex1));
+                            string square1 = arg.Substring(spaceIndex2 + 1, 2);
+                            string square2 = arg.Substring(spaceIndex3 + 1, 2);
+                            board = GetCheckersBoard(boardName);
+                            int[] oldCoord = new int[2];
+                            oldCoord = ParseChessLocation(square1);
+                            int[] newCoord = new int[2];
+                            newCoord = ParseChessLocation(square2);
+                            int oldX = oldCoord[0];
+                            int oldY = oldCoord[1];
+                            int newX = newCoord[0];
+                            int newY = newCoord[1];
+
+                            if (CheckersIsLegal(square1, square2, board[oldX, oldY], board, isWhitesTurn(boardName)))
+                            {
+                                board[newX, newY] = board[oldX, oldY];
+                                board[oldX, oldY] = '0';
+                                SaveCheckersBoard(boardName, board, !isWhitesTurn(boardName));
+                                await e.Channel.SendMessage("**Board: **" + boardName + @"
+" + CheckersBoardToString1(boardName, e.Server.Id.ToString()));
+                                await e.Channel.SendMessage(CheckersBoardToString2(boardName, e.Server.Id.ToString()));
+                                await e.Channel.SendMessage("It is now `" + (isWhitesTurn(boardName) ? "red's" : "blue's") + "` turn");
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage("That move is illegal. Please try again");
+                            }
+                        }
+                        else if (action == "delete")
+                        {
+                            string boardName = arg.Substring(spaceIndex1 + 1, arg.Length - spaceIndex1 - 1);
+                            DeleteCheckersBoard(boardName);
+                            await e.Channel.SendMessage("Board with name " + boardName + " has been successfully deleted");
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage("One or more arguments are in the incorrect format. Please try again");
+                        }
+                    }
+                });
+
+            commandList.Add("github");
+            commands.CreateCommand("github")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    LogCommand("github", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
+                    string desc = @"**Description:**
+Sends the link to the github page for the bot
+
+**Arguments:**
+None
+
+**Restrictions:**
+None";
+
+                    if (e.GetArg("param") == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage("The github for this bot can be found here: https://github.com/dolinseth/DiscordBot");
+                    }
                 });
 
             //commandList.Add("typeracer");
@@ -2353,51 +2441,6 @@ None";
             File.WriteAllLines(fileAddress, newLines);
         }
 
-
-
-
-
-
-
-
-        private int[] ParseCheckersLocation(string square)
-        {
-            int row = Int32.Parse(square.Substring(1, 1)) - 1;
-            int column = 0;
-            int[] result = new int[2];
-            switch (square.Substring(0, 1))
-            {
-                case "a":
-                    column = 0;
-                    break;
-                case "b":
-                    column = 1;
-                    break;
-                case "c":
-                    column = 2;
-                    break;
-                case "d":
-                    column = 3;
-                    break;
-                case "e":
-                    column = 4;
-                    break;
-                case "f":
-                    column = 5;
-                    break;
-                case "g":
-                    column = 6;
-                    break;
-                case "h":
-                    column = 7;
-                    break;
-            }
-
-            result[0] = column;
-            result[1] = row;
-            return result;
-        }
-
         private bool CheckersIsLegal(string square1, string square2, char piece, char[,] board, bool isWhitesTurn)
         {
             /*pieces will be converted to and from integers as follows:
@@ -2579,21 +2622,22 @@ None";
         private string ConvertCheckersPieceToEmoji(char piece, string serverId)
         {
             //to get the array in proper notation, copy and paste the following line into the server
-            //emojiCodes = new string[] { "\:Blank:", "\:WPawn:", "\:WRook:", "\:WKnight:", "\:WBishop:", "\:WKing:", "\:WQueen:", "\:BPawn:", "\:BRook:", "\:BKnight:", "\:BBishop:", "\:BKing:", "\:BQueen:"};
+            //emojiCodes = new string[] { "\:Blank:", "\:RReg:", "\:BReg:", "\:RKing:", "\:BKing:"};
             //and paste the output into the corresponding if statement
 
             string[] emojiCodes = { };
-            if (serverId == "293460412593209345")
+            if (serverId == "308360449509031936")
             {
-                emojiCodes = new string[] { "<:Blank:298949936475537430>", "<:WPawn:298949937155276800>", "<:WRook:298949937498947584>", "<:WKnight:298949937121591297>", "<:WBishop:298949937050288128>", "<:WKing:298949936836247584>", "<:WQueen:298949937398546433>", "<:BPawn:298949936362422275>", "<:BRook:298949936651698177>", "<:BKnight:298949936341319684>", "<:BBishop:298949936236724225>", "<:BKing:298949936676864030>", "<:BQueen:298949936949493760>" };
+                emojiCodes = new string[] { "<:Blank:308361674568630277>", "<:RReg:314509024815087616>", "<:BReg:314509024676544512>", "<:RKing:314509024773013504>", "<:BKing:308361674413572097>" };
             }
             else if (serverId == "237688211420217344")
             {
-                emojiCodes = new string[] { "<:Blank:298927119562571777>", "<:WPawn:298602840694325248>", "<:WRook:298602840706777088>", "<:WKnight:298602840824479754>", "<:WBishop:298602840304254978>", "<:WKing:298602840333615106>", "<:WQueen:298602840916623370>", "<:BPawn:298602840488804362>", "<:BRook:298602840249860102>", "<:BKnight:298602840295735306>", "<:BBishop:298602839805263875>", "<:BKing:298602840207917056>", "<:BQueen:298602840027561985>" };
+                emojiCodes = new string[] { "<:Blank:298927119562571777>", "<:RReg:314509686453960705>", "<:BReg:314509686667870211>", "<:RKing:314509686600892417>", "<:BKing:298602840207917056>" };
             }
-            else if (serverId == "308360449509031936")
+            //placeholder
+            else if (serverId == "")
             {
-                emojiCodes = new string[] { "<:Blank:308361674568630277>", "<:WPawn:308361675139186698>", "<:WRook:308361674975477762>", "<:WKnight:308361675206033428>", "<:WBishop:308361674899849216>", "<:WKing:308361674979803137>", "<:WQueen:308361675029872641>", "<:BPawn:308361674610442241>", "<:BRook:308361674816094208>", "<:BKnight:308361674535075841>", "<:BBishop:308361674191142942>", "<:BKing:308361674413572097>", "<:BQueen:308361674405052418>" };
+
             }
             switch (piece)
             {
