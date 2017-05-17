@@ -1375,6 +1375,97 @@ None";
                     }
                 });
 
+            commandList.Add("roll");
+            commands.CreateCommand("roll")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    string arg = e.GetArg("param");
+                    LogCommand("roll", e.User.Name, e.Channel.Name, e.Server.Name, arg);
+
+                    string desc = @"**Description:**
+rolls the specified number and type of dice, and returns both the individual rolls and the total
+
+**Arguments:**
+`Dice` - The amount and type of dice to roll, given in the format *NumberOfDice*d*NumberOfFaces* e.g., 2d6 rolls 2 six sided dice
+
+**Restrictions:**
+None";
+                    if (arg == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+                    else
+                    {
+                        int dIndex = arg.IndexOf('d');
+                        int numOfDice = Int32.Parse(arg.Substring(0, dIndex));
+                        int numOfFaces = Int32.Parse(arg.Substring(dIndex + 1, arg.Length - dIndex - 1));
+
+                        string rolls = "Now rolling **" + arg + "**";
+                        int roll;
+                        int total = 0;
+                        for (int i = 0; i < numOfDice; i++)
+                        {
+                            roll = rnd.Next(1, numOfFaces + 1);
+                            rolls += @"
+**Roll " + (i + 1) + ":** " + roll;
+                            total += roll;
+                        }
+                        rolls += @"
+
+**Total:** " + total;
+                        await e.Channel.SendMessage(rolls);
+                    }
+                });
+
+            commandList.Add("coin");
+            commands.CreateCommand("coin")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    string arg = e.GetArg("param");
+                    LogCommand("coin", e.User.Name, e.Channel.Name, e.Server.Name, arg);
+
+                    string desc = @"**Description:**
+Flips the specified number of coins and returns the results of each flip, as well as the total occurences of heads and tails
+
+**Arguments:**
+`NumOfCoins` - The number of coins that you would like to flip
+
+**Restrictions:**
+`NumOfCoins` Must be less than or equal to 322 because otherwise the output exceeds the character limit on Discord";
+                    if (arg == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+                    else
+                    {
+                        int coinsToFlip = Int32.Parse(arg);
+                        int heads = 0;
+                        int tails = 0;
+                        string flips = "Now flipping **" + coinsToFlip + @"** coins:
+```";
+                        for (int i = 0; i < coinsToFlip; i++)
+                        {
+                            int flip = rnd.Next(2);
+                            flips += (flip == 1) ? ("HEADS ") : ("TAILS ");
+                            if (flip == 1)
+                            {
+                                heads++;
+                            }
+                            else
+                            {
+                                tails++;
+                            }
+                        }
+                        flips += @"```
+**Heads:** " + heads + @"
+**Tails:** " + tails;
+
+                        await e.Channel.SendMessage(flips);
+                    }
+                });
+
             //commandList.Add("typeracer");
             commands.CreateCommand("typeracer")
                 .Parameter("param", ParameterType.Unparsed)
