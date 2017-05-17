@@ -64,7 +64,7 @@ None
 
 **Restrictions:**
 None";
-                    if (e.GetArg("param") == "help")
+                    if (e.GetArg("param").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
@@ -90,7 +90,7 @@ Sets the user's server wide nickname to the requested name
 
 **Restrictions:**
 Can only be used in the verification channel";
-                    if (e.GetArg("RequestedName") == "help")
+                    if (e.GetArg("RequestedName").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
@@ -154,6 +154,7 @@ Can only be used by users with administrator permissions on the server";
 
             commandList.Add("math");
             commands.CreateCommand("math")
+                .Alias("wolfram", "wolframalpha", "wa")
                 .Parameter("RawInput", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
@@ -165,10 +166,15 @@ Queries Wolfram Alpha with the given parameter and returns the response as a .gi
 **Arguments:**
 `RawInput` - The query to be sent to Wolfram Alpha
 
+**Aliases:**
+`wolfram`
+`wolframalpha`
+`wa`
+
 **Restrictions:**
 None";
 
-                    if (e.GetArg("RawInput") == "help")
+                    if (e.GetArg("RawInput").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
@@ -204,7 +210,7 @@ None
 
 **Restrictions:**
 None";
-                    if (e.GetArg("param") == "help")
+                    if (e.GetArg("param").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
@@ -246,7 +252,7 @@ The payouts are listed below:";
 
                     ulong BetAmount = 0;
 
-                    if (e.GetArg("BetAmount") == "help")
+                    if (e.GetArg("BetAmount").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                         await e.Channel.SendFile(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Payouts.png");
@@ -550,7 +556,7 @@ None
 
 **Restrictions:**
 None";
-                    if (e.GetArg("param") == "help")
+                    if (e.GetArg("param").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
@@ -579,7 +585,7 @@ None
 
 **Restrictions:**
 None";
-                    if (e.GetArg("param") == "help")
+                    if (e.GetArg("param").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
@@ -616,7 +622,7 @@ Adds a user to the token database
 
 **Restrictions:**
 You must be an administrator on the server to use this command";
-                    if (e.GetArg("UserId") == "help")
+                    if (e.GetArg("UserId").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
@@ -659,7 +665,7 @@ Gives the specified amount of bonus tokens to the specified user
 
 **Restrictions:**
 You must be an administrator on the server to use this command";
-                    string param = e.GetArg("param");
+                    string param = e.GetArg("param").ToLower();
                     if (param == "help")
                     {
                         await e.Channel.SendMessage(desc);
@@ -698,7 +704,7 @@ Takes the specified amount of tokens from the specified user
 
 **Restrictions:**
 You must be an administrator on the server to use this command";
-                    string param = e.GetArg("param");
+                    string param = e.GetArg("param").ToLower();
                     if (param == "help")
                     {
                         await e.Channel.SendMessage(desc);
@@ -735,7 +741,7 @@ None
 
 **Restrictions:**
 None";
-                    if (e.GetArg("param") == "help")
+                    if (e.GetArg("param").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
@@ -763,7 +769,7 @@ Gives the specified user the specified amount of tokens from the bank of the use
 
 **Restrictions:**
 You must possess the amount of tokens that you wish to give";
-                    string param = e.GetArg("param");
+                    string param = e.GetArg("param").ToLower();
                     if (param == "help")
                     {
                         await e.Channel.SendMessage(desc);
@@ -807,7 +813,7 @@ ASCII chess. Doesn't get much more complicated than that
 
 **Restrictions:**
 None";
-                    string arg = e.GetArg("param");
+                    string arg = e.GetArg("param").ToLower();
 
                     if (arg == "help")
                     {
@@ -953,7 +959,7 @@ None";
                 {
                     LogCommand("lucas", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("termNumber"));
 
-                    string arg = e.GetArg("termNumber");
+                    string arg = e.GetArg("termNumber").ToLower();
                     string desc = @"**Description:**
 Returns the requested term from the Lucas Sequence
 
@@ -980,7 +986,7 @@ Due to operator overflow errors in the calculation of the sequence, `TermNumber`
                 {
                     LogCommand("fibonacci", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("termNumber"));
 
-                    string arg = e.GetArg("termNumber");
+                    string arg = e.GetArg("termNumber").ToLower();
                     string desc = @"**Description:**
 Returns the requested term from the Fibonacci Sequence
 
@@ -1020,7 +1026,7 @@ Displays a shop that can be used to purchase things with the tokens that you ear
 
 **Restrictions:**
 You must possess an amount of tokens equal to or greater than the price of the option that you would like to purchase";
-                    if (arg == "help")
+                    if (arg.ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
@@ -1069,7 +1075,7 @@ You must possess an amount of tokens equal to or greater than the price of the o
                 {
                     LogCommand("hangman", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
 
-                    string arg = e.GetArg("param");
+                    string arg = e.GetArg("param").ToLower();
                     string desc = @"**Description:**
 Plays ASCII hangman
 
@@ -1137,7 +1143,7 @@ It is recommended that you create the game in a channel separate to where you in
                             }
                             Hangman += @"
 ";
-                            
+
                             Hangman += DrawHangman(numOfFails);
 
                             await e.Channel.SendMessage(Hangman);
@@ -1278,7 +1284,7 @@ ASCII checkers. Doesn't get much more complicated than that
 
 **Restrictions:**
 None";
-                    string arg = e.GetArg("param");
+                    string arg = e.GetArg("param").ToLower();
 
                     if (arg == "help")
                     {
@@ -1365,7 +1371,7 @@ None
 **Restrictions:**
 None";
 
-                    if (e.GetArg("param") == "help")
+                    if (e.GetArg("param").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
@@ -1377,17 +1383,21 @@ None";
 
             commandList.Add("roll");
             commands.CreateCommand("roll")
+                .Alias("dice")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    string arg = e.GetArg("param");
+                    string arg = e.GetArg("param").ToLower();
                     LogCommand("roll", e.User.Name, e.Channel.Name, e.Server.Name, arg);
 
                     string desc = @"**Description:**
-rolls the specified number and type of dice, and returns both the individual rolls and the total
+Rolls the specified number and type of dice, and returns both the individual rolls and the total
 
 **Arguments:**
 `Dice` - The amount and type of dice to roll, given in the format *NumberOfDice*d*NumberOfFaces* e.g., 2d6 rolls 2 six sided dice
+
+**Aliases:**
+`roll`
 
 **Restrictions:**
 None";
@@ -1420,10 +1430,11 @@ None";
 
             commandList.Add("coin");
             commands.CreateCommand("coin")
+                .Alias("flip")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    string arg = e.GetArg("param");
+                    string arg = e.GetArg("param").ToLower();
                     LogCommand("coin", e.User.Name, e.Channel.Name, e.Server.Name, arg);
 
                     string desc = @"**Description:**
@@ -1431,6 +1442,9 @@ Flips the specified number of coins and returns the results of each flip, as wel
 
 **Arguments:**
 `NumOfCoins` - The number of coins that you would like to flip
+
+**Aliases:**
+`flip`
 
 **Restrictions:**
 `NumOfCoins` Must be less than or equal to 322 because otherwise the output exceeds the character limit on Discord";
