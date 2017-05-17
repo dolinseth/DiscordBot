@@ -797,7 +797,7 @@ User with user id " + receiveId + " now has " + string.Format("{0:n0}", GetToken
                     LogCommand("chess", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
 
                     string desc = @"**Description:**
-Makes an ASCII chess board which can be edited or displayed using this command
+ASCII chess. Doesn't get much more complicated than that
 
 **Arguments:**
 `Action` - The action to take. Can be `create`, `move`, `display`, `delete`, or `checkmate`
@@ -824,7 +824,7 @@ None";
                         if (action == "create")
                         {
                             string boardName = arg.Substring(spaceIndex1 + 1, arg.Length - spaceIndex1 - 1);
-                            CreateBoard(boardName);
+                            CreateChessBoard(boardName);
 
                             await e.Channel.SendMessage("Board with name " + boardName + " successfully created");
                         }
@@ -832,8 +832,8 @@ None";
                         {
                             string boardName = arg.Substring(spaceIndex1 + 1, arg.Length - spaceIndex1 - 1);
                             await e.Channel.SendMessage("**Board: **" + boardName + @"
-" + BoardToString1(boardName, e.Server.Id.ToString()));
-                            await e.Channel.SendMessage(BoardToString2(boardName, e.Server.Id.ToString()));
+" + ChessBoardToString1(boardName, e.Server.Id.ToString()));
+                            await e.Channel.SendMessage(ChessBoardToString2(boardName, e.Server.Id.ToString()));
                             await e.Channel.SendMessage("It is now `" + (isWhitesTurn(boardName) ? "white's" : "black's") + "` turn");
                         }
                         else if (action == "move")
@@ -841,17 +841,17 @@ None";
                             string boardName = arg.Substring(spaceIndex1 + 1, arg.Length - (7 + spaceIndex1));
                             string square1 = arg.Substring(spaceIndex2 + 1, 2);
                             string square2 = arg.Substring(spaceIndex3 + 1, 2);
-                            board = GetBoard(boardName);
+                            board = GetChessBoard(boardName);
                             int[] oldCoord = new int[2];
-                            oldCoord = parseChessLocation(square1);
+                            oldCoord = ParseChessLocation(square1);
                             int[] newCoord = new int[2];
-                            newCoord = parseChessLocation(square2);
+                            newCoord = ParseChessLocation(square2);
                             int oldX = oldCoord[0];
                             int oldY = oldCoord[1];
                             int newX = newCoord[0];
                             int newY = newCoord[1];
 
-                            if (isLegal(square1, square2, board[oldX, oldY], board, isWhitesTurn(boardName)))
+                            if (ChessIsLegal(square1, square2, board[oldX, oldY], board, isWhitesTurn(boardName)))
                             {
                                 if (board[newX, newY] == '5')
                                 {
@@ -865,11 +865,11 @@ None";
                                 {
                                     board[newX, newY] = board[oldX, oldY];
                                     board[oldX, oldY] = '0';
-                                    SaveBoard(boardName, board, !isWhitesTurn(boardName));
+                                    SaveChessBoard(boardName, board, !isWhitesTurn(boardName));
                                 }
                                 await e.Channel.SendMessage("**Board: **" + boardName + @"
-" + BoardToString1(boardName, e.Server.Id.ToString()));
-                                await e.Channel.SendMessage(BoardToString2(boardName, e.Server.Id.ToString()));
+" + ChessBoardToString1(boardName, e.Server.Id.ToString()));
+                                await e.Channel.SendMessage(ChessBoardToString2(boardName, e.Server.Id.ToString()));
                                 await e.Channel.SendMessage("It is now `" + (isWhitesTurn(boardName) ? "white's" : "black's") + "` turn");
                             }
                             else
@@ -882,42 +882,42 @@ None";
                             string boardName = arg.Substring(spaceIndex1 + 1, arg.Length - (7 + spaceIndex1));
                             string square1 = arg.Substring(spaceIndex2 + 1, 2);
                             string square2 = arg.Substring(spaceIndex3 + 1, 2);
-                            board = GetBoard(boardName);
+                            board = GetChessBoard(boardName);
                             int[] oldCoord = new int[2];
-                            oldCoord = parseChessLocation(square1);
+                            oldCoord = ParseChessLocation(square1);
                             int[] newCoord = new int[2];
-                            newCoord = parseChessLocation(square2);
+                            newCoord = ParseChessLocation(square2);
                             int oldX = oldCoord[0];
                             int oldY = oldCoord[1];
                             int newX = newCoord[0];
                             int newY = newCoord[1];
 
-                            if (isLegal(square1, square2, board[oldX, oldY], board, isWhitesTurn(boardName)))
+                            if (ChessIsLegal(square1, square2, board[oldX, oldY], board, isWhitesTurn(boardName)))
                             {
                                 if (board[newX, newY] == '5')
                                 {
                                     await e.Channel.SendMessage(@"Black has won.
 **Final Board: **" + boardName + @"
-" + BoardToString1(boardName, e.Server.Id.ToString()));
-                                    await e.Channel.SendMessage(BoardToString2(boardName, e.Server.Id.ToString()));
+" + ChessBoardToString1(boardName, e.Server.Id.ToString()));
+                                    await e.Channel.SendMessage(ChessBoardToString2(boardName, e.Server.Id.ToString()));
                                     await e.Channel.SendMessage("It is now `" + (isWhitesTurn(boardName) ? "white's" : "black's") + "` turn");
-                                    DeleteBoard(boardName);
+                                    DeleteChessBoard(boardName);
                                 }
                                 else if (board[newX, newY] == 'b')
                                 {
                                     await e.Channel.SendMessage(@"White has won.
 **Final Board: **" + boardName + @"
-" + BoardToString1(boardName, e.Server.Id.ToString()));
-                                    await e.Channel.SendMessage(BoardToString2(boardName, e.Server.Id.ToString()));
+" + ChessBoardToString1(boardName, e.Server.Id.ToString()));
+                                    await e.Channel.SendMessage(ChessBoardToString2(boardName, e.Server.Id.ToString()));
                                     await e.Channel.SendMessage("It is now `" + (isWhitesTurn(boardName) ? "white's" : "black's") + "` turn");
-                                    DeleteBoard(boardName);
+                                    DeleteChessBoard(boardName);
                                 }
                             }
                         }
                         else if (action == "delete")
                         {
                             string boardName = arg.Substring(spaceIndex1 + 1, arg.Length - spaceIndex1 - 1);
-                            DeleteBoard(boardName);
+                            DeleteChessBoard(boardName);
                             await e.Channel.SendMessage("Board with name " + boardName + " has been successfully deleted");
                         }
                         /*else if (action == "gamble")
@@ -1260,6 +1260,33 @@ You lose and the man has been hanged!";
                     }
                 });
 
+            commandList.Add("checkers");
+            commands.CreateCommand("checkers")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    LogCommand("checkers", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
+
+                    string desc = @"**Description:**
+ASCII checkers. Doesn't get much more complicated than that
+
+**Arguments:**
+`Action` - The action to take. Can be `create`, `move`, `display`, `delete`, or `checkmate`
+`BoardName` - The name of the board which you want to edit or display. Set when the board is created
+`Square1` - The location of the piece that you would like to move. Given in the format LetterNumber. e.g. A6. Not necessary for actions `create`, `display`, and `delete`
+`Square2` - The location that you would like to move the selected piece to. Given in the format LetterNumber. e.g. A6. Not necessary for actions `create`, `display`, and `delete`
+
+**Restrictions:**
+None";
+                    string arg = e.GetArg("param");
+
+                    if (arg == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+
+                });
+
             //commandList.Add("typeracer");
             commands.CreateCommand("typeracer")
                 .Parameter("param", ParameterType.Unparsed)
@@ -1333,14 +1360,17 @@ None";
 ";
                     }
                     list += @"To get help with a specific command, type
-`!commandname help`";
+`!commandname help`
+";
+                    list += "If you need other help, or would like to report a bug, please message _the_bacon#4872";
                     await e.Channel.SendMessage(list);
                 });
 
+            //command for testing stuff
             commands.CreateCommand("aoeuaoeu")
                 .Do(async (e) =>
                 {
-                    //Use this command for testing things.
+
 
                     await e.Channel.SendMessage("done");
                 });
@@ -1348,6 +1378,7 @@ None";
             discord.ExecuteAndWait(async () =>
             {
                 await discord.Connect("Mjk4NTk0NDQyNjAyODcyODM2.C8RnWg.QmRSfJ0atEkcwruNqFwqDwJJb_w", TokenType.Bot);
+                discord.SetGame("!help | BaconBot");
             });
         }
 
@@ -1466,7 +1497,7 @@ None";
             }
         }
 
-        private int[] parseChessLocation(string square)
+        private int[] ParseChessLocation(string square)
         {
             int row = Int32.Parse(square.Substring(1, 1)) - 1;
             int column = 0;
@@ -1504,7 +1535,7 @@ None";
             return result;
         }
 
-        private bool isLegal(string square1, string square2, char piece, char[,] board, bool isWhitesTurn)
+        private bool ChessIsLegal(string square1, string square2, char piece, char[,] board, bool isWhitesTurn)
         {
             /*pieces will be converted to and from integers as follows:
             0 = empty space
@@ -1523,9 +1554,9 @@ None";
             */
 
             int[] oldCoord = new int[2];
-            oldCoord = parseChessLocation(square1);
+            oldCoord = ParseChessLocation(square1);
             int[] newCoord = new int[2];
-            newCoord = parseChessLocation(square2);
+            newCoord = ParseChessLocation(square2);
             int oldX = oldCoord[0];
             int oldY = oldCoord[1];
             int newX = newCoord[0];
@@ -1534,7 +1565,7 @@ None";
             int yChange = oldY - newY;
             int xChangeAbs = Math.Abs(xChange);
             int yChangeAbs = Math.Abs(yChange);
-            bool isLegal = false;
+            bool ChessIsLegal = false;
 
             if ((isWhitesTurn && isWhiteOrBlank(board[oldX, oldY]) && board[oldX, oldY] != '0') || (!isWhitesTurn && isBlackOrBlank(board[oldX, oldY]) && board[oldX, oldY] != '0'))
             {
@@ -1548,10 +1579,10 @@ None";
                         {
                             if (xChangeAbs == 0 || (board[newX, newY] != '0' && xChangeAbs == 1 && yChangeAbs == 1))
                             {
-                                isLegal = true;
+                                ChessIsLegal = true;
                             }
                         }
-                        return isLegal;
+                        return ChessIsLegal;
                     }
 
                     //rooks
@@ -1559,14 +1590,14 @@ None";
                     {
                         if (xChangeAbs == 0)
                         {
-                            isLegal = true;
+                            ChessIsLegal = true;
                             if (yChange > 0)
                             {
                                 for (int i = 1; i < (yChangeAbs); i++)
                                 {
                                     if (board[oldX, oldY - i] != '0')
                                     {
-                                        isLegal = false;
+                                        ChessIsLegal = false;
                                     }
                                 }
                             }
@@ -1576,21 +1607,21 @@ None";
                                 {
                                     if (board[oldX, oldY + i] != '0')
                                     {
-                                        isLegal = false;
+                                        ChessIsLegal = false;
                                     }
                                 }
                             }
                         }
                         else if (yChangeAbs == 0)
                         {
-                            isLegal = true;
+                            ChessIsLegal = true;
                             if (xChange > 0)
                             {
                                 for (int i = 1; i < (xChangeAbs); i++)
                                 {
                                     if (board[oldX - i, oldY] != '0')
                                     {
-                                        isLegal = false;
+                                        ChessIsLegal = false;
                                     }
                                 }
                             }
@@ -1600,12 +1631,12 @@ None";
                                 {
                                     if (board[oldX + i, oldY] != '0')
                                     {
-                                        isLegal = false;
+                                        ChessIsLegal = false;
                                     }
                                 }
                             }
                         }
-                        return isLegal;
+                        return ChessIsLegal;
                     }
 
                     //knights
@@ -1613,9 +1644,9 @@ None";
                     {
                         if ((yChangeAbs == 1 && xChangeAbs == 2) || (yChangeAbs == 2 && xChangeAbs == 1))
                         {
-                            isLegal = true;
+                            ChessIsLegal = true;
                         }
-                        return isLegal;
+                        return ChessIsLegal;
                     }
 
                     //bishops
@@ -1623,7 +1654,7 @@ None";
                     {
                         if (yChangeAbs == xChangeAbs)
                         {
-                            isLegal = true;
+                            ChessIsLegal = true;
                             if (yChange > 0)
                             {
                                 if (xChange > 0)
@@ -1632,7 +1663,7 @@ None";
                                     {
                                         if (board[oldX - i, oldY - i] != '0')
                                         {
-                                            isLegal = false;
+                                            ChessIsLegal = false;
                                         }
                                     }
                                 }
@@ -1642,7 +1673,7 @@ None";
                                     {
                                         if (board[oldX + i, oldY - i] != '0')
                                         {
-                                            isLegal = false;
+                                            ChessIsLegal = false;
                                         }
                                     }
                                 }
@@ -1655,7 +1686,7 @@ None";
                                     {
                                         if (board[oldX - i, oldY + i] != '0')
                                         {
-                                            isLegal = false;
+                                            ChessIsLegal = false;
                                         }
                                     }
                                 }
@@ -1665,13 +1696,13 @@ None";
                                     {
                                         if (board[oldX + i, oldY + i] != '0')
                                         {
-                                            isLegal = false;
+                                            ChessIsLegal = false;
                                         }
                                     }
                                 }
                             }
                         }
-                        return isLegal;
+                        return ChessIsLegal;
                     }
 
                     //kings
@@ -1679,9 +1710,9 @@ None";
                     {
                         if (yChangeAbs <= 1 && xChangeAbs <= 1)
                         {
-                            isLegal = true;
+                            ChessIsLegal = true;
                         }
-                        return isLegal;
+                        return ChessIsLegal;
                     }
 
                     //queens
@@ -1690,7 +1721,7 @@ None";
                         //checks to see if the queen is moving in a cardinal direction, and returns false if she isn't
                         if ((xChangeAbs == 0 && yChangeAbs != 0) || (yChangeAbs == 0 && xChangeAbs != 0) || (xChangeAbs == yChangeAbs))
                         {
-                            isLegal = true;
+                            ChessIsLegal = true;
                         }
                         else
                         {
@@ -1704,7 +1735,7 @@ None";
                                 {
                                     if (board[oldX - i, oldY - i] != '0')
                                     {
-                                        isLegal = false;
+                                        ChessIsLegal = false;
                                     }
                                 }
                             }
@@ -1714,7 +1745,7 @@ None";
                                 {
                                     if (board[oldX + i, oldY - i] != '0')
                                     {
-                                        isLegal = false;
+                                        ChessIsLegal = false;
                                     }
                                 }
                             }
@@ -1727,7 +1758,7 @@ None";
                                 {
                                     if (board[oldX - i, oldY + i] != '0')
                                     {
-                                        isLegal = false;
+                                        ChessIsLegal = false;
                                     }
                                 }
                             }
@@ -1737,30 +1768,30 @@ None";
                                 {
                                     if (board[oldX + i, oldY + i] != '0')
                                     {
-                                        isLegal = false;
+                                        ChessIsLegal = false;
                                     }
                                 }
                             }
                         }
-                        return isLegal;
+                        return ChessIsLegal;
                     }
 
                     //default, because Visual Studio won't let me compile because not all code paths return a value
                     else
                     {
-                        return isLegal;
+                        return ChessIsLegal;
                     }
                 }
                 //Another default, because Visual Studio won't let me compile because not all code paths return a value
                 else
                 {
-                    return isLegal;
+                    return ChessIsLegal;
                 }
             }
             //Hooray for defaults and Visual Studio thinking I'm too dumb to know all the possible inputs into my own function
             else
             {
-                return isLegal;
+                return ChessIsLegal;
             }
         }
 
@@ -1788,7 +1819,7 @@ None";
             }
         }
 
-        private void CreateBoard(string boardName)
+        private void CreateChessBoard(string boardName)
         {
             char[,] board = { { '8', '7', '0', '0', '0', '0', '1', '2' }, { '9', '7', '0', '0', '0', '0', '1', '3' }, { 'a', '7', '0', '0', '0', '0', '1', '4' }, { 'c', '7', '0', '0', '0', '0', '1', '6' }, { 'b', '7', '0', '0', '0', '0', '1', '5' }, { 'a', '7', '0', '0', '0', '0', '1', '4' }, { '9', '7', '0', '0', '0', '0', '1', '3' }, { '8', '7', '0', '0', '0', '0', '1', '2' } };
 
@@ -1814,7 +1845,7 @@ None";
             File.WriteAllLines(FileAddress, newLines);
         }
 
-        private void DeleteBoard(string boardName)
+        private void DeleteChessBoard(string boardName)
         {
             string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
             StreamReader sr = new StreamReader(FileAddress);
@@ -1845,7 +1876,7 @@ None";
             File.WriteAllLines(FileAddress, newLines);
         }
 
-        private void SaveBoard(string boardName, char[,] board, bool isWhitesTurn)
+        private void SaveChessBoard(string boardName, char[,] board, bool isWhitesTurn)
         {
             string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
             StreamReader sr = new StreamReader(FileAddress);
@@ -1875,7 +1906,7 @@ None";
             File.WriteAllLines(FileAddress, lines);
         }
 
-        private char[,] GetBoard(string boardName)
+        private char[,] GetChessBoard(string boardName)
         {
             char[,] board = new char[8, 8];
             string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
@@ -1903,7 +1934,7 @@ None";
             return board;
         }
 
-        private string ConvertPieceToEmoji(char piece, string serverId)
+        private string ConvertChessPieceToEmoji(char piece, string serverId)
         {
             //to get the array in proper notation, copy and paste the following line into the server
             //emojiCodes = new string[] { "\:Blank:", "\:WPawn:", "\:WRook:", "\:WKnight:", "\:WBishop:", "\:WKing:", "\:WQueen:", "\:BPawn:", "\:BRook:", "\:BKnight:", "\:BBishop:", "\:BKing:", "\:BQueen:"};
@@ -1955,9 +1986,9 @@ None";
             }
         }
 
-        private string BoardToString1(string boardName, string serverId)
+        private string ChessBoardToString1(string boardName, string serverId)
         {
-            char[,] board = GetBoard(boardName);
+            char[,] board = GetChessBoard(boardName);
             string boardString = @"....A      B      C      D      E      F      G      H
 --------------------------------------------";
 
@@ -1967,7 +1998,7 @@ None";
 " + (i + 1) + "|";
                 for (int j = 0; j < 8; j++)
                 {
-                    boardString = boardString + ConvertPieceToEmoji(board[j, i], serverId) + "|";
+                    boardString = boardString + ConvertChessPieceToEmoji(board[j, i], serverId) + "|";
                 }
                 boardString = boardString + @"
 --------------------------------------------";
@@ -1976,9 +2007,9 @@ None";
             return boardString;
         }
 
-        private string BoardToString2(string boardName, string serverId)
+        private string ChessBoardToString2(string boardName, string serverId)
         {
-            char[,] board = GetBoard(boardName);
+            char[,] board = GetChessBoard(boardName);
             string boardString = @"";
 
             for (int i = 4; i < 8; i++)
@@ -1987,7 +2018,7 @@ None";
 " + (i + 1) + "|";
                 for (int j = 0; j < 8; j++)
                 {
-                    boardString = boardString + ConvertPieceToEmoji(board[j, i], serverId) + "|";
+                    boardString = boardString + ConvertChessPieceToEmoji(board[j, i], serverId) + "|";
                 }
                 boardString = boardString + @"
 --------------------------------------------";
@@ -2320,6 +2351,306 @@ None";
             }
 
             File.WriteAllLines(fileAddress, newLines);
+        }
+
+
+
+
+
+
+
+
+        private int[] ParseCheckersLocation(string square)
+        {
+            int row = Int32.Parse(square.Substring(1, 1)) - 1;
+            int column = 0;
+            int[] result = new int[2];
+            switch (square.Substring(0, 1))
+            {
+                case "a":
+                    column = 0;
+                    break;
+                case "b":
+                    column = 1;
+                    break;
+                case "c":
+                    column = 2;
+                    break;
+                case "d":
+                    column = 3;
+                    break;
+                case "e":
+                    column = 4;
+                    break;
+                case "f":
+                    column = 5;
+                    break;
+                case "g":
+                    column = 6;
+                    break;
+                case "h":
+                    column = 7;
+                    break;
+            }
+
+            result[0] = column;
+            result[1] = row;
+            return result;
+        }
+
+        private bool CheckersIsLegal(string square1, string square2, char piece, char[,] board, bool isWhitesTurn)
+        {
+            /*pieces will be converted to and from integers as follows:
+            0 = empty space
+            1 = white regular
+            2 = red regular
+            3 = white king
+            4 = red king
+            */
+
+            int[] oldCoord = new int[2];
+            oldCoord = ParseChessLocation(square1);
+            int[] newCoord = new int[2];
+            newCoord = ParseChessLocation(square2);
+            int oldX = oldCoord[0];
+            int oldY = oldCoord[1];
+            int newX = newCoord[0];
+            int newY = newCoord[1];
+            int xChange = oldX - newX;
+            int yChange = oldY - newY;
+            int xChangeAbs = Math.Abs(xChange);
+            int yChangeAbs = Math.Abs(yChange);
+            //used to determine if the piece should be moving up or down the board
+            int k = (isWhitesTurn) ? (-1) : (1);
+
+            if ((newX % 2 == 0 && newY % 2 == 0) || (newX % 2 == 1 && newY % 2 == 1))
+            {
+                return false;
+            }
+            else
+            {
+                if ((yChange == 1*k || yChange == 2*k) && (yChangeAbs == xChangeAbs))
+                {
+                    if (yChangeAbs == 2)
+                    {
+                        for (int i = 0; i < 2; i++)
+                        {
+                            if (board[oldX + (xChange / 2), oldY + (k)] != ((isWhitesTurn) ? ('2') : ('1')) || board[oldX + (xChange / 2), oldY + (k)] != ((isWhitesTurn) ? ('4') : ('3')))
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (board[newX, newY] == '0')
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void CreateCheckersBoard(string boardName)
+        {
+            char[,] board = { { '0', '2', '0', '0', '0', '1', '0', '1' }, { '2', '0', '2', '0', '0', '0', '1', '0' }, { '0', '2', '0', '0', '0', '1', '0', '1' }, { '2', '0', '2', '0', '0', '0', '1', '0' }, { '0', '2', '0', '0', '0', '1', '0', '1' }, { '2', '0', '2', '0', '0', '0', '1', '0' }, { '0', '2', '0', '0', '0', '1', '0', '1' }, { '2', '0', '2', '0', '0', '0', '1', '0' } };
+
+            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Checkers\Boards.txt";
+            var lines = File.ReadAllLines(FileAddress);
+            int length = lines.Length;
+            string[] newLines = new string[length + 9];
+
+            for (int i = 0; i < length; i++)
+            {
+                newLines[i] = lines[i];
+            }
+            newLines[length] = boardName + ":1";
+
+            for (int i = 1; i < 9; i++)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    newLines[length + i] = newLines[length + i] + Char.ToString(board[j, i - 1]);
+                }
+            }
+
+            File.WriteAllLines(FileAddress, newLines);
+        }
+
+        private void DeleteCheckersBoard(string boardName)
+        {
+            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Checkers\Boards.txt";
+            StreamReader sr = new StreamReader(FileAddress);
+            string line = "";
+            int lineNumber = 0;
+
+            line = sr.ReadLine();
+            while (!line.Contains(boardName))
+            {
+                line = sr.ReadLine();
+                lineNumber++;
+            }
+            sr.Close();
+
+            var lines = File.ReadAllLines(FileAddress);
+            int length = lines.Length;
+            string[] newLines = new string[length - 9];
+
+            for (int i = 0; i < lineNumber; i++)
+            {
+                newLines[i] = lines[i];
+            }
+            for (int i = lineNumber; i < length - 9; i++)
+            {
+                newLines[i] = lines[i + 9];
+            }
+
+            File.WriteAllLines(FileAddress, newLines);
+        }
+
+        private void SaveCheckersBoard(string boardName, char[,] board, bool isWhitesTurn)
+        {
+            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Checkers\Boards.txt";
+            StreamReader sr = new StreamReader(FileAddress);
+            string line = "";
+            int lineNumber = 1;
+
+            line = sr.ReadLine();
+            while (!line.Contains(boardName))
+            {
+                line = sr.ReadLine();
+                lineNumber++;
+            }
+            sr.Close();
+
+            var lines = File.ReadAllLines(FileAddress);
+            lines[lineNumber - 1] = boardName + ":" + (isWhitesTurn ? "1" : "0");
+
+            for (int i = 0; i < 8; i++)
+            {
+                lines[lineNumber + i] = "";
+                for (int j = 0; j < 8; j++)
+                {
+                    lines[lineNumber + i] = lines[lineNumber + i] + board[j, i].ToString();
+                }
+            }
+
+            File.WriteAllLines(FileAddress, lines);
+        }
+
+        private char[,] GetCheckersBoard(string boardName)
+        {
+            char[,] board = new char[8, 8];
+            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Checkers\Boards.txt";
+            StreamReader sr = new StreamReader(FileAddress);
+            string line = "";
+            int lineNumber = 1;
+
+            line = sr.ReadLine();
+            while (!line.Contains(boardName))
+            {
+                line = sr.ReadLine();
+                lineNumber++;
+            }
+            sr.Close();
+
+            var lines = File.ReadAllLines(FileAddress);
+            for (int i = 0; i < 8; i++)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    board[j, i] = char.Parse(lines[lineNumber + i].Substring(j, 1));
+                }
+            }
+
+            return board;
+        }
+
+        private string ConvertCheckersPieceToEmoji(char piece, string serverId)
+        {
+            //to get the array in proper notation, copy and paste the following line into the server
+            //emojiCodes = new string[] { "\:Blank:", "\:WPawn:", "\:WRook:", "\:WKnight:", "\:WBishop:", "\:WKing:", "\:WQueen:", "\:BPawn:", "\:BRook:", "\:BKnight:", "\:BBishop:", "\:BKing:", "\:BQueen:"};
+            //and paste the output into the corresponding if statement
+
+            string[] emojiCodes = { };
+            if (serverId == "293460412593209345")
+            {
+                emojiCodes = new string[] { "<:Blank:298949936475537430>", "<:WPawn:298949937155276800>", "<:WRook:298949937498947584>", "<:WKnight:298949937121591297>", "<:WBishop:298949937050288128>", "<:WKing:298949936836247584>", "<:WQueen:298949937398546433>", "<:BPawn:298949936362422275>", "<:BRook:298949936651698177>", "<:BKnight:298949936341319684>", "<:BBishop:298949936236724225>", "<:BKing:298949936676864030>", "<:BQueen:298949936949493760>" };
+            }
+            else if (serverId == "237688211420217344")
+            {
+                emojiCodes = new string[] { "<:Blank:298927119562571777>", "<:WPawn:298602840694325248>", "<:WRook:298602840706777088>", "<:WKnight:298602840824479754>", "<:WBishop:298602840304254978>", "<:WKing:298602840333615106>", "<:WQueen:298602840916623370>", "<:BPawn:298602840488804362>", "<:BRook:298602840249860102>", "<:BKnight:298602840295735306>", "<:BBishop:298602839805263875>", "<:BKing:298602840207917056>", "<:BQueen:298602840027561985>" };
+            }
+            else if (serverId == "308360449509031936")
+            {
+                emojiCodes = new string[] { "<:Blank:308361674568630277>", "<:WPawn:308361675139186698>", "<:WRook:308361674975477762>", "<:WKnight:308361675206033428>", "<:WBishop:308361674899849216>", "<:WKing:308361674979803137>", "<:WQueen:308361675029872641>", "<:BPawn:308361674610442241>", "<:BRook:308361674816094208>", "<:BKnight:308361674535075841>", "<:BBishop:308361674191142942>", "<:BKing:308361674413572097>", "<:BQueen:308361674405052418>" };
+            }
+            switch (piece)
+            {
+                case '0':
+                    return emojiCodes[0];
+                case '1':
+                    return emojiCodes[1];
+                case '2':
+                    return emojiCodes[2];
+                case '3':
+                    return emojiCodes[3];
+                case '4':
+                    return emojiCodes[4];
+                default:
+                    return "";
+            }
+        }
+
+        private string CheckersBoardToString1(string boardName, string serverId)
+        {
+            char[,] board = GetCheckersBoard(boardName);
+            string boardString = @"....A      B      C      D      E      F      G      H
+--------------------------------------------";
+
+            for (int i = 0; i < 4; i++)
+            {
+                boardString = boardString + @"
+" + (i + 1) + "|";
+                for (int j = 0; j < 8; j++)
+                {
+                    boardString = boardString + ConvertCheckersPieceToEmoji(board[j, i], serverId) + "|";
+                }
+                boardString = boardString + @"
+--------------------------------------------";
+            }
+
+            return boardString;
+        }
+
+        private string CheckersBoardToString2(string boardName, string serverId)
+        {
+            char[,] board = GetCheckersBoard(boardName);
+            string boardString = @"";
+
+            for (int i = 4; i < 8; i++)
+            {
+                boardString = boardString + @"
+" + (i + 1) + "|";
+                for (int j = 0; j < 8; j++)
+                {
+                    boardString = boardString + ConvertCheckersPieceToEmoji(board[j, i], serverId) + "|";
+                }
+                boardString = boardString + @"
+--------------------------------------------";
+            }
+
+            return boardString;
         }
     }
 }
