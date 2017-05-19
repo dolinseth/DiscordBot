@@ -1395,9 +1395,10 @@ Rolls the specified number and type of dice, and returns both the individual rol
 
 **Arguments:**
 `Dice` - The amount and type of dice to roll, given in the format *NumberOfDice*d*NumberOfFaces* e.g., 2d6 rolls 2 six sided dice
+`OutputType` - The level of detail to output. Can be `concise` or `verbose`. Defaults to `concise`
 
 **Aliases:**
-`roll`
+`dice`
 
 **Restrictions:**
 None";
@@ -1407,9 +1408,19 @@ None";
                     }
                     else
                     {
+                        int spaceIndex = arg.IndexOf(' ');
+                        bool isVerbose = false;
+                        if (spaceIndex != -1)
+                        {
+                            if (arg.Substring(spaceIndex).Contains("verbose"))
+                            {
+                                isVerbose = true;
+                            }
+                        }
+
                         int dIndex = arg.IndexOf('d');
                         int numOfDice = Int32.Parse(arg.Substring(0, dIndex));
-                        int numOfFaces = Int32.Parse(arg.Substring(dIndex + 1, arg.Length - dIndex - 1));
+                        int numOfFaces = Int32.Parse(arg.Substring(dIndex + 1, ((spaceIndex == -1) ? (arg.Length) : (spaceIndex)) - dIndex - 1));
 
                         string rolls = "Now rolling **" + arg + "**";
                         int roll;
@@ -1417,13 +1428,24 @@ None";
                         for (int i = 0; i < numOfDice; i++)
                         {
                             roll = rnd.Next(1, numOfFaces + 1);
-                            rolls += @"
+                            if (isVerbose)
+                            {
+                                rolls += @"
 **Roll " + (i + 1) + ":** " + roll;
+                            }
+
                             total += roll;
                         }
                         rolls += @"
 
 **Total:** " + total;
+
+                        if (rolls.Length >= 2000 && isVerbose)
+                        {
+                            rolls = @"Due to the number of dice rolled, the output exceeded Discord's character limit. As a result, the output has been changed to concise.
+Now rolling **" + arg + @"**
+**Total:** " + total;
+                        }
                         await e.Channel.SendMessage(rolls);
                     }
                 });
@@ -1442,27 +1464,55 @@ Flips the specified number of coins and returns the results of each flip, as wel
 
 **Arguments:**
 `NumOfCoins` - The number of coins that you would like to flip
+`TypeOfOutput` - The level of detail to output. Can be `concise` or `verbose`. Defaults to `verbose`
 
 **Aliases:**
 `flip`
 
 **Restrictions:**
-`NumOfCoins` Must be less than or equal to 322 because otherwise the output exceeds the character limit on Discord";
+None";
                     if (arg == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
                     else
                     {
-                        int coinsToFlip = Int32.Parse(arg);
+                        int spaceIndex = arg.IndexOf(' ');
+                        Console.WriteLine("spaceIndex = " + spaceIndex);
+                        bool isVerbose = true;
+                        if (spaceIndex != -1)
+                        {
+                            if (arg.Substring(spaceIndex).Contains("concise"))
+                            {
+                                Console.WriteLine("got to point 1");
+                                isVerbose = false;
+                            }
+                        }
+                        int coinsToFlip = Int32.Parse(arg.Substring(0, (spaceIndex - 1 <= 0) ? (arg.Length) : (spaceIndex)));
                         int heads = 0;
                         int tails = 0;
-                        string flips = "Now flipping **" + coinsToFlip + @"** coins:
+                        string flips;
+                        Console.WriteLine("isVerbose = " + isVerbose);
+                        if (isVerbose)
+                        {
+                            flips = "Now flipping **" + coinsToFlip + @"** coins:
 ```";
+                        }
+                        else
+                        {
+                            flips = "Now flipping **" + coinsToFlip + "** coins:";
+                            Console.WriteLine("Got to point 2");
+                        }
                         for (int i = 0; i < coinsToFlip; i++)
                         {
+                            Console.WriteLine("Got to point 3. i = " + i);
                             int flip = rnd.Next(2);
-                            flips += (flip == 1) ? ("HEADS ") : ("TAILS ");
+                            if (isVerbose)
+                            {
+                                flips += (flip == 1) ? ("HEADS ") : ("TAILS ");
+                            }
+
+                            Console.WriteLine("");
                             if (flip == 1)
                             {
                                 heads++;
@@ -1472,9 +1522,26 @@ Flips the specified number of coins and returns the results of each flip, as wel
                                 tails++;
                             }
                         }
-                        flips += @"```
+                        if (isVerbose)
+                        {
+                            flips += @"```
 **Heads:** " + heads + @"
 **Tails:** " + tails;
+                        }
+                        else
+                        {
+                            flips += @"
+**Heads:** " + heads + @"
+**Tails:** " + tails;
+                        }
+
+                        if (flips.Length >= 2000)
+                        {
+                            flips = @"Due to the number of dice rolled, the output exceeded Discord's character limit. As a result, the output has been changed to concise.
+Now rolling **" + coinsToFlip + @"** coins:
+**Heads:** " + heads + @"
+**Tails:** " + tails;
+                        }
 
                         await e.Channel.SendMessage(flips);
                     }
