@@ -11,21 +11,109 @@ using Discord;
 using Discord.Commands;
 using Discord.Audio;
 //using NAudio;
-using NAudio.Wave;
+//using NAudio.Wave;
 //using NAudio.CoreAudioApi;
 //using VideoLibrary;
 //using EmergenceGuardian;
 //using System.Diagnostics;
-using YoutubeExtractor;
+//using YoutubeExtractor;
 
 namespace ConsoleApp1
 {
+    class ConfigVar
+    {
+        public string name { get; set; }
+        public string value { get; set; }
+    }
+
     class MyBot
     {
         DiscordClient discord;
+        string baseFilePath = @"C:\users\Seth Dolin\Desktop\PhysicsBot\";
 
         public MyBot()
         {
+            string logPath = baseFilePath + "Log.txt";
+            var configLines = File.ReadAllLines(baseFilePath + "Config.txt");
+
+            List<ConfigVar> configVars = new List<ConfigVar>();
+
+            string[] validConfigVars =
+            {
+                "WolframAlphaAppId",
+                "StartingTokens",
+                "GithubLink",
+                "TyperacerLink",
+                "AuthorUId",
+                "AuthorUsername",
+                "BotToken",
+                "PlayingMessage"
+            };
+
+            for (int i = 0; i < validConfigVars.Length; i++)
+            {
+                configVars.Add(new ConfigVar());
+                configVars[i].name = validConfigVars[i];
+            }
+
+            for (int i = 0; i < configLines.Length; i++)
+            {
+                int colonIndex = configLines[i].IndexOf(':');
+                int spaceIndex = configLines[i].IndexOf(' ');
+
+                if (configLines[i].Length != 0)
+                {
+                    if (colonIndex != -1)
+                    {
+                        string name = configLines[i].Substring(0, colonIndex);
+                        if (validConfigVars.Contains(name))
+                        {
+                            string value = "";
+                            if (spaceIndex != -1)
+                            {
+                                value = configLines[i].Substring(colonIndex + 2, configLines[i].Length - colonIndex - 2);
+                            }
+                            else
+                            {
+                                value = configLines[i].Substring(colonIndex + 1, configLines[i].Length - colonIndex - 1);
+                            }
+                            configVars.FirstOrDefault(c => c.name == name).value = value;
+
+                            LogEvent("Loading config variable " + name + " with value " + value);
+                        }
+                        else
+                        {
+                            LogEvent("Skipping config line [" + (i + 1) + "] because it does not contain a valid variable name", true);
+                        }
+                    }
+                    else
+                    {
+                        LogEvent("Skipping config line [" + (i + 1) + "] because it does not contain a valid separator", true);
+                    }
+                }
+                else
+                {
+                    LogEvent("Skipping config line [" + (i + 1) + "] because it is empty", true);
+                }
+            }
+
+            for (int i = 0; i < configVars.Count; i++)
+            {
+                if (configVars[i].value == null || configVars[i].value == "")
+                {
+                    LogEvent("Config variable [" + configVars[i].name + "] has not been given a value in the config", true);
+                }
+            }
+
+            string WolframAlphaAppId = configVars.FirstOrDefault(c => c.name == "WolframAlphaAppId").value;
+            string StartingTokens = configVars.FirstOrDefault(c => c.name == "StartingTokens").value;
+            string GithubLink = configVars.FirstOrDefault(c => c.name == "GithubLink").value;
+            string TyperacerLink = configVars.FirstOrDefault(c => c.name == "TyperacerLink").value;
+            string AuthorUId = configVars.FirstOrDefault(c => c.name == "AuthorUId").value;
+            string AuthorUsername = configVars.FirstOrDefault(c => c.name == "AuthorUsername").value;
+            string BotToken = configVars.FirstOrDefault(c => c.name == "BotToken").value;
+            string PlayingMessage = configVars.FirstOrDefault(c => c.name == "PlayingMessage").value;
+
             discord = new DiscordClient(x =>
             {
                 x.LogLevel = LogSeverity.Info;
@@ -181,16 +269,16 @@ None";
                     else
                     {
                         string FormattedInput = SoftwareKobo.Net.WebUtility.UrlEncode($"{e.GetArg("RawInput")}");
-                        string url = "https://api.wolframalpha.com/v1/simple?input=" + FormattedInput + "&appid=Q4G43K-6Y3AXL983V";
+                        string url = "https://api.wolframalpha.com/v1/simple?input=" + FormattedInput + "&appid=" + WolframAlphaAppId;
                         await e.Channel.SendMessage("Thinking...");
                         await e.Channel.SendIsTyping();
                         using (WebClient client = new WebClient())
                         {
-                            client.DownloadFile(new Uri(url), @"C:\users\Seth Dolin\Desktop\PhysicsBot\WolframOutput.gif");
+                            client.DownloadFile(new Uri(url), baseFilePath + @"WolframOutput.gif");
                         }
                         Message[] MessagesToDelete = await e.Channel.DownloadMessages(1);
                         await e.Channel.DeleteMessages(MessagesToDelete);
-                        await e.Channel.SendFile(@"C:\users\Seth Dolin\Desktop\PhysicsBot\WolframOutput.gif");
+                        await e.Channel.SendFile(baseFilePath + @"WolframOutput.gif");
                         await e.Channel.SendMessage("Click to enlarge");
                     }
                 });
@@ -255,7 +343,7 @@ The payouts are listed below:";
                     if (e.GetArg("BetAmount").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
-                        await e.Channel.SendFile(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Payouts.png");
+                        await e.Channel.SendFile(baseFilePath + @"SlotMachine\Payouts.png");
                     }
                     else if (ulong.TryParse(e.GetArg("BetAmount"), out BetAmount) || e.GetArg("BetAmount") == "max")
                     {
@@ -269,7 +357,7 @@ The payouts are listed below:";
                         else
                         {
                             //weighted random number generator to make payouts lower
-                            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\weight.txt";
+                            string fileAddress = baseFilePath + @"SlotMachine\weight.txt";
                             double weight = double.Parse(File.ReadAllLines(fileAddress)[0]);
                             //set in the file listed above, not here
                             //higher values make it harder to get better rolls. 
@@ -286,18 +374,9 @@ The payouts are listed below:";
                             double num1 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 0, rnd)));
                             double num2 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 1, rnd)));
                             double num3 = Math.Pow(2, (WeightedSelector(weights, maxWeight, 2, rnd)));
-                            /*Console.WriteLine("num1: " + num1);
-                            Console.WriteLine("num2: " + num2);
-                            Console.WriteLine("num3: " + num3);*/
-
-                            // The original, unweighted, generator
-                            /*double num1 = Math.Pow(2, rnd.Next(1, 9));
-                            double num2 = Math.Pow(2, rnd.Next(9, 17));
-                            double num3 = Math.Pow(2, rnd.Next(17, 25));
-                            */
 
                             string Id = e.User.Id.ToString();
-                            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
+                            string FileAddress = baseFilePath + @"SlotMachine\PlayerList.txt";
                             ulong currentTokens = GetTokens(Id);
                             ulong newTokens = 0;
                             if (e.GetArg("BetAmount") == "max")
@@ -323,35 +402,35 @@ The payouts are listed below:";
                                 switch (num1)
                                 {
                                     case 2:
-                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blank.png";
+                                        img1 = baseFilePath + @"SlotMachine\Blank.png";
                                         break;
 
                                     case 4:
-                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\RedBar.png";
+                                        img1 = baseFilePath + @"SlotMachine\RedBar.png";
                                         break;
 
                                     case 8:
-                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\WhiteBar.png";
+                                        img1 = baseFilePath + @"SlotMachine\WhiteBar.png";
                                         break;
 
                                     case 16:
-                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\BlueBar.png";
+                                        img1 = baseFilePath + @"SlotMachine\BlueBar.png";
                                         break;
 
                                     case 32:
-                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Red7.png";
+                                        img1 = baseFilePath + @"SlotMachine\Red7.png";
                                         break;
 
                                     case 64:
-                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\White7.png";
+                                        img1 = baseFilePath + @"SlotMachine\White7.png";
                                         break;
 
                                     case 128:
-                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blue7.png";
+                                        img1 = baseFilePath + @"SlotMachine\Blue7.png";
                                         break;
 
                                     case 256:
-                                        img1 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Flag7.png";
+                                        img1 = baseFilePath + @"SlotMachine\Flag7.png";
                                         break;
 
                                     default:
@@ -361,35 +440,35 @@ The payouts are listed below:";
                                 switch (num2)
                                 {
                                     case 512:
-                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blank.png";
+                                        img2 = baseFilePath + @"SlotMachine\Blank.png";
                                         break;
 
                                     case 1024:
-                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\RedBar.png";
+                                        img2 = baseFilePath + @"SlotMachine\RedBar.png";
                                         break;
 
                                     case 2048:
-                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\WhiteBar.png";
+                                        img2 = baseFilePath + @"SlotMachine\WhiteBar.png";
                                         break;
 
                                     case 4096:
-                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\BlueBar.png";
+                                        img2 = baseFilePath + @"SlotMachine\BlueBar.png";
                                         break;
 
                                     case 8192:
-                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Red7.png";
+                                        img2 = baseFilePath + @"SlotMachine\Red7.png";
                                         break;
 
                                     case 16384:
-                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\White7.png";
+                                        img2 = baseFilePath + @"SlotMachine\White7.png";
                                         break;
 
                                     case 32768:
-                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blue7.png";
+                                        img2 = baseFilePath + @"SlotMachine\Blue7.png";
                                         break;
 
                                     case 65536:
-                                        img2 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Flag7.png";
+                                        img2 = baseFilePath + @"SlotMachine\Flag7.png";
                                         break;
 
                                     default:
@@ -399,35 +478,35 @@ The payouts are listed below:";
                                 switch (num3)
                                 {
                                     case 131072:
-                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blank.png";
+                                        img3 = baseFilePath + @"SlotMachine\Blank.png";
                                         break;
 
                                     case 262144:
-                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\RedBar.png";
+                                        img3 = baseFilePath + @"SlotMachine\RedBar.png";
                                         break;
 
                                     case 524288:
-                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\WhiteBar.png";
+                                        img3 = baseFilePath + @"SlotMachine\WhiteBar.png";
                                         break;
 
                                     case 1048576:
-                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\BlueBar.png";
+                                        img3 = baseFilePath + @"SlotMachine\BlueBar.png";
                                         break;
 
                                     case 2097152:
-                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Red7.png";
+                                        img3 = baseFilePath + @"SlotMachine\Red7.png";
                                         break;
 
                                     case 4194304:
-                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\White7.png";
+                                        img3 = baseFilePath + @"SlotMachine\White7.png";
                                         break;
 
                                     case 8388608:
-                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Blue7.png";
+                                        img3 = baseFilePath + @"SlotMachine\Blue7.png";
                                         break;
 
                                     case 16777216:
-                                        img3 = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Flag7.png";
+                                        img3 = baseFilePath + @"SlotMachine\Flag7.png";
                                         break;
 
                                     default:
@@ -591,7 +670,7 @@ None";
                     }
                     else
                     {
-                        string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
+                        string FileAddress = baseFilePath + @"SlotMachine\PlayerList.txt";
                         var oldLines = File.ReadAllLines(FileAddress);
                         int length = oldLines.Length;
                         string[] newLines = new string[length + 2];
@@ -600,7 +679,7 @@ None";
                             newLines[i] = oldLines[i];
                         }
                         newLines[length] = e.User.Id.ToString();
-                        newLines[length + 1] = "500";
+                        newLines[length + 1] = StartingTokens;
                         File.WriteAllLines(FileAddress, newLines);
                         await e.Channel.SendMessage("User " + e.Server.GetUser(UInt64.Parse(e.GetArg("UserId"))).Nickname + " has been successfully added to the database");
                     }
@@ -618,7 +697,7 @@ None";
 Adds a user to the token database
 
 **Arguments:**
-`UserId` - The user id of the user to be added. User Id can be acquired by having the user type `!id`
+`UserId` - The user id of the user to be added. User Id can be acquired by having the user type `!id` or through the use of Discord Developer Tools
 
 **Restrictions:**
 You must be an administrator on the server to use this command";
@@ -628,8 +707,7 @@ You must be an administrator on the server to use this command";
                     }
                     else if (e.User.ServerPermissions.Administrator == true)
                     {
-                        await e.Channel.SendMessage("Got to p2");
-                        string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
+                        string FileAddress = baseFilePath + @"SlotMachine\PlayerList.txt";
                         var oldLines = File.ReadAllLines(FileAddress);
                         int length = oldLines.Length;
                         string[] newLines = new string[length + 2];
@@ -638,7 +716,7 @@ You must be an administrator on the server to use this command";
                             newLines[i] = oldLines[i];
                         }
                         newLines[length] = e.GetArg("UserId");
-                        newLines[length + 1] = "0";
+                        newLines[length + 1] = StartingTokens;
                         File.WriteAllLines(FileAddress, newLines);
                         await e.Channel.SendMessage("User with id " + e.GetArg("UserId") + " has been successfully added to the database");
                     }
@@ -926,14 +1004,6 @@ None";
                             DeleteChessBoard(boardName);
                             await e.Channel.SendMessage("Board with name " + boardName + " has been successfully deleted");
                         }
-                        /*else if (action == "gamble")
-                        {
-                            await e.Channel.SendMessage("got to point 1");
-                            string boardName = arg.Substring(spaceIndex1 + 1, spaceIndex3 - spaceIndex2);
-                            await e.Channel.SendMessage(boardName);
-                            //SetBets(boardName, betAmount, e.User.Id);
-                            
-                        }*/
                         else
                         {
                             await e.Channel.SendMessage("One or more arguments are in the incorrect format. Please try again");
@@ -1013,7 +1083,7 @@ Due to operator overflow errors in the calculation of the sequence, `TermNumber`
                 {
                     LogCommand("shop", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("choice"));
 
-                    string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Shop.txt";
+                    string fileAddress = baseFilePath + @"SlotMachine\Shop.txt";
                     var lines = File.ReadAllLines(fileAddress);
                     string arg = e.GetArg("choice");
 
@@ -1110,7 +1180,7 @@ It is recommended that you create the game in a channel separate to where you in
                         }
                         if (action == "create")
                         {
-                            if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == "193399026748620800")
+                            if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == AuthorUId)
                             {
                                 await e.Channel.DeleteMessages(await e.Channel.DownloadMessages(1));
 
@@ -1266,7 +1336,7 @@ You lose and the man has been hanged!";
                     }
                 });
 
-            commandList.Add("checkers");
+            //commandList.Add("checkers");
             commands.CreateCommand("checkers")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -1377,7 +1447,7 @@ None";
                     }
                     else
                     {
-                        await e.Channel.SendMessage("The github for this bot can be found here: https://github.com/dolinseth/DiscordBot");
+                        await e.Channel.SendMessage("The github for this bot can be found here: " + GithubLink);
                     }
                 });
 
@@ -1568,7 +1638,7 @@ None";
                     }
                     else
                     {
-                        await e.Channel.SendMessage("http://data.typeracer.com/misc/badge?user=_the_bacon");
+                        await e.Channel.SendMessage(TyperacerLink);
                     }
                 });
 
@@ -1579,7 +1649,7 @@ None";
                 {
                     LogCommand("getmessages", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
 
-                    if (e.User.Id == 193399026748620800)
+                    if (e.User.Id == uint.Parse(AuthorUId))
                     {
                         int numOfMessages = Int32.Parse(e.GetArg("param"));
                         //deletes the message containing the command to download from the channel
@@ -1622,7 +1692,7 @@ None";
                     list += @"To get help with a specific command, type
 `!commandname help`
 ";
-                    list += "If you need other help, or would like to report a bug, please message _the_bacon#4872";
+                    list += "If you need other help, or would like to report a bug, please message " + AuthorUsername;
                     await e.Channel.SendMessage(list);
                 });
 
@@ -1637,12 +1707,27 @@ None";
 
             discord.ExecuteAndWait(async () =>
             {
-                await discord.Connect("Mjk4NTk0NDQyNjAyODcyODM2.C8RnWg.QmRSfJ0atEkcwruNqFwqDwJJb_w", TokenType.Bot);
-                discord.SetGame("!help | BaconBot");
+                await discord.Connect(BotToken, TokenType.Bot);
+                discord.SetGame(PlayingMessage);
             });
         }
 
-        private static void LogCommand(string command, string username, string channel, string server, string param)
+        private void LogEvent(string message, bool isError = false)
+        {
+            string log = DateTime.Now.ToString() + ": " + ((isError) ? ("~~ERROR~~ ") : ("")) + message;
+            Console.WriteLine(log);
+            string fileAddress = baseFilePath + @"Log.txt";
+            var lines = File.ReadAllLines(fileAddress);
+            string[] newLines = new string[lines.Length + 1];
+            for (int i = 0; i < lines.Length; i++)
+            {
+                newLines[i] = lines[i];
+            }
+            newLines[lines.Length] = log;
+            File.WriteAllLines(fileAddress, newLines);
+        }
+
+        private void LogCommand(string command, string username, string channel, string server, string param)
         {
             string log;
             command = command.ToUpper();
@@ -1655,7 +1740,7 @@ None";
             }
             log = DateTime.Now.ToString() + ": Now executing command " + command + " for user " + username + " in channel " + channel + " in server " + server + " with parameter " + param;
             Console.WriteLine(log);
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Log.txt";
+            string fileAddress = baseFilePath + @"Log.txt";
             var lines = File.ReadAllLines(fileAddress);
             string[] newLines = new string[lines.Length + 1];
             for (int i = 0; i < lines.Length; i++)
@@ -1666,7 +1751,7 @@ None";
             File.WriteAllLines(fileAddress, newLines);
         }
 
-        private static BigInteger[] CalculateFibonacci(int n)
+        private BigInteger[] CalculateFibonacci(int n)
         {
             Console.WriteLine("Got to point 1");
             BigInteger[] terms = new BigInteger[n];
@@ -1679,9 +1764,9 @@ None";
             return terms;
         }
 
-        private static void SaveFibonacciString(BigInteger[] terms)
+        private void SaveFibonacciString(BigInteger[] terms)
         {
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Sequences\Fibonacci.txt";
+            string fileAddress = baseFilePath + @"Sequences\Fibonacci.txt";
             string[] lines = new string[terms.Length];
             for (int i = 0; i < terms.Length; i++)
             {
@@ -1693,13 +1778,13 @@ None";
 
         private string GetFibonacci(int n)
         {
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Sequences\Fibonacci.txt";
+            string fileAddress = baseFilePath + @"Sequences\Fibonacci.txt";
 
             var lines = File.ReadAllLines(fileAddress);
             return lines[n - 1];
         }
 
-        private static BigInteger[] CalculateLucas(int n)
+        private BigInteger[] CalculateLucas(int n)
         {
             Console.WriteLine("Got to point 1");
             BigInteger[] terms = new BigInteger[n];
@@ -1712,9 +1797,9 @@ None";
             return terms;
         }
 
-        private static void SaveLucasString(BigInteger[] terms)
+        private void SaveLucasString(BigInteger[] terms)
         {
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Sequences\Lucas.txt";
+            string fileAddress = baseFilePath + @"Sequences\Lucas.txt";
             string[] lines = new string[terms.Length];
             for (int i = 0; i < terms.Length; i++)
             {
@@ -1726,7 +1811,7 @@ None";
 
         private string GetLucas(int n)
         {
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Sequences\Lucas.txt";
+            string fileAddress = baseFilePath + @"Sequences\Lucas.txt";
 
             var lines = File.ReadAllLines(fileAddress);
             return lines[n - 1];
@@ -1734,7 +1819,7 @@ None";
 
         private bool isWhitesTurn(string boardName)
         {
-            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
+            string FileAddress = baseFilePath + @"Chess\Boards.txt";
             StreamReader sr = new StreamReader(FileAddress);
             string line = "";
             int lineNumber = 1;
@@ -2083,7 +2168,7 @@ None";
         {
             char[,] board = { { '8', '7', '0', '0', '0', '0', '1', '2' }, { '9', '7', '0', '0', '0', '0', '1', '3' }, { 'a', '7', '0', '0', '0', '0', '1', '4' }, { 'c', '7', '0', '0', '0', '0', '1', '6' }, { 'b', '7', '0', '0', '0', '0', '1', '5' }, { 'a', '7', '0', '0', '0', '0', '1', '4' }, { '9', '7', '0', '0', '0', '0', '1', '3' }, { '8', '7', '0', '0', '0', '0', '1', '2' } };
 
-            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
+            string FileAddress = baseFilePath + @"Chess\Boards.txt";
             var lines = File.ReadAllLines(FileAddress);
             int length = lines.Length;
             string[] newLines = new string[length + 9];
@@ -2107,7 +2192,7 @@ None";
 
         private void DeleteChessBoard(string boardName)
         {
-            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
+            string FileAddress = baseFilePath + @"Chess\Boards.txt";
             StreamReader sr = new StreamReader(FileAddress);
             string line = "";
             int lineNumber = 0;
@@ -2138,7 +2223,7 @@ None";
 
         private void SaveChessBoard(string boardName, char[,] board, bool isWhitesTurn)
         {
-            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
+            string FileAddress = baseFilePath + @"Chess\Boards.txt";
             StreamReader sr = new StreamReader(FileAddress);
             string line = "";
             int lineNumber = 1;
@@ -2169,7 +2254,7 @@ None";
         private char[,] GetChessBoard(string boardName)
         {
             char[,] board = new char[8, 8];
-            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Chess\Boards.txt";
+            string FileAddress = baseFilePath + @"Chess\Boards.txt";
             StreamReader sr = new StreamReader(FileAddress);
             string line = "";
             int lineNumber = 1;
@@ -2311,7 +2396,7 @@ None";
 
         private ulong GetTokens(string userId)
         {
-            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
+            string FileAddress = baseFilePath + @"SlotMachine\PlayerList.txt";
             StreamReader sr = new StreamReader(FileAddress);
 
             ulong currentTokens = 0;
@@ -2334,7 +2419,7 @@ None";
 
         private void SetTokens(string userId, ulong newTokens)
         {
-            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\PlayerList.txt";
+            string FileAddress = baseFilePath + @"SlotMachine\PlayerList.txt";
             var lines = File.ReadAllLines(FileAddress);
             StreamReader sr = new StreamReader(FileAddress);
             int lineNumber = 1;
@@ -2354,7 +2439,7 @@ None";
             lines[lineNumber] = newTokens.ToString();
             File.WriteAllLines(FileAddress, lines);
 
-            var logLines = File.ReadAllLines(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Log.txt");
+            var logLines = File.ReadAllLines(baseFilePath + @"SlotMachine\Log.txt");
             int length = logLines.Length;
             string[] newLogLines = new string[length + 1];
             for (int i = 0; i < length; i++)
@@ -2370,7 +2455,7 @@ None";
             {
                 newLogLines[length] = Id.ToString() + ":" + GetTokens(Id) + ":" + "-" + (oldTokens - newTokens) + ":" + localDate.ToString();
             }
-            File.WriteAllLines(@"C:\users\Seth Dolin\Desktop\PhysicsBot\SlotMachine\Log.txt", newLogLines);
+            File.WriteAllLines(baseFilePath + @"SlotMachine\Log.txt", newLogLines);
         }
 
         private bool isRegistered(string userId)
@@ -2460,7 +2545,7 @@ None";
 
         private void CreateHangman(string name, string word, int reward = 10000)
         {
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            string fileAddress = baseFilePath + @"Hangman\Games.txt";
             var lines = File.ReadAllLines(fileAddress);
             string[] newLines = new string[lines.Length + 2];
 
@@ -2481,7 +2566,7 @@ None";
 
         private string GetHangmanAnswer(string name)
         {
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            string fileAddress = baseFilePath + @"Hangman\Games.txt";
             var lines = File.ReadAllLines(fileAddress);
             int lineNum = 0;
             for (int i = 0; i < lines.Length; i++)
@@ -2501,7 +2586,7 @@ None";
 
         private char[] GetHangmanGuessed(string name)
         {
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            string fileAddress = baseFilePath + @"Hangman\Games.txt";
             var lines = File.ReadAllLines(fileAddress);
             int lineNum = 0;
             for (int i = 0; i < lines.Length; i++)
@@ -2523,7 +2608,7 @@ None";
 
         private int GetHangmanFailCount(string name)
         {
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            string fileAddress = baseFilePath + @"Hangman\Games.txt";
             var lines = File.ReadAllLines(fileAddress);
             int lineNum = 0;
             for (int i = 0; i < lines.Length; i++)
@@ -2541,7 +2626,7 @@ None";
 
         private void SetHangman(string name, string word, char[] guessed, int numOfFails, int reward = 10000)
         {
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            string fileAddress = baseFilePath + @"Hangman\Games.txt";
             var lines = File.ReadAllLines(fileAddress);
             int lineNum = 0;
             for (int i = 0; i < lines.Length; i++)
@@ -2565,7 +2650,7 @@ None";
 
         private int GetHangmanReward(string name)
         {
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            string fileAddress = baseFilePath + @"Hangman\Games.txt";
             var lines = File.ReadAllLines(fileAddress);
             int lineNum = 0;
             for (int i = 0; i < lines.Length; i++)
@@ -2587,7 +2672,7 @@ None";
 
         private void DeleteHangman(string name)
         {
-            string fileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Hangman\Games.txt";
+            string fileAddress = baseFilePath + @"Hangman\Games.txt";
             var lines = File.ReadAllLines(fileAddress);
             int lineNum = 0;
             for (int i = 0; i < lines.Length; i++)
@@ -2680,7 +2765,7 @@ None";
         {
             char[,] board = { { '0', '2', '0', '0', '0', '1', '0', '1' }, { '2', '0', '2', '0', '0', '0', '1', '0' }, { '0', '2', '0', '0', '0', '1', '0', '1' }, { '2', '0', '2', '0', '0', '0', '1', '0' }, { '0', '2', '0', '0', '0', '1', '0', '1' }, { '2', '0', '2', '0', '0', '0', '1', '0' }, { '0', '2', '0', '0', '0', '1', '0', '1' }, { '2', '0', '2', '0', '0', '0', '1', '0' } };
 
-            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Checkers\Boards.txt";
+            string FileAddress = baseFilePath + @"Checkers\Boards.txt";
             var lines = File.ReadAllLines(FileAddress);
             int length = lines.Length;
             string[] newLines = new string[length + 9];
@@ -2704,7 +2789,7 @@ None";
 
         private void DeleteCheckersBoard(string boardName)
         {
-            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Checkers\Boards.txt";
+            string FileAddress = baseFilePath + @"Checkers\Boards.txt";
             StreamReader sr = new StreamReader(FileAddress);
             string line = "";
             int lineNumber = 0;
@@ -2735,7 +2820,7 @@ None";
 
         private void SaveCheckersBoard(string boardName, char[,] board, bool isWhitesTurn)
         {
-            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Checkers\Boards.txt";
+            string FileAddress = baseFilePath + @"Checkers\Boards.txt";
             StreamReader sr = new StreamReader(FileAddress);
             string line = "";
             int lineNumber = 1;
@@ -2766,7 +2851,7 @@ None";
         private char[,] GetCheckersBoard(string boardName)
         {
             char[,] board = new char[8, 8];
-            string FileAddress = @"C:\users\Seth Dolin\Desktop\PhysicsBot\Checkers\Boards.txt";
+            string FileAddress = baseFilePath + @"Checkers\Boards.txt";
             StreamReader sr = new StreamReader(FileAddress);
             string line = "";
             int lineNumber = 1;
