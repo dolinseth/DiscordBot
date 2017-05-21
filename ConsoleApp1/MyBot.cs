@@ -31,88 +31,19 @@ namespace ConsoleApp1
         DiscordClient discord;
         string baseFilePath = @"C:\users\Seth Dolin\Desktop\PhysicsBot\";
 
+        private static string WolframAlphaAppId { get; set; }
+        private static string StartingTokens { get; set; }
+        private static string GithubLink { get; set; }
+        private static string TyperacerLink { get; set; }
+        private static string AuthorUId { get; set; }
+        private static string AuthorUsername { get; set; }
+        private static string BotToken { get; set; }
+        private static string PlayingMessage { get; set; }
+        private static char PrefixChar { get; set; }
+
         public MyBot()
         {
-            string logPath = baseFilePath + "Log.txt";
-            var configLines = File.ReadAllLines(baseFilePath + "Config.txt");
-
-            List<ConfigVar> configVars = new List<ConfigVar>();
-
-            string[] validConfigVars =
-            {
-                "WolframAlphaAppId",
-                "StartingTokens",
-                "GithubLink",
-                "TyperacerLink",
-                "AuthorUId",
-                "AuthorUsername",
-                "BotToken",
-                "PlayingMessage"
-            };
-
-            for (int i = 0; i < validConfigVars.Length; i++)
-            {
-                configVars.Add(new ConfigVar());
-                configVars[i].name = validConfigVars[i];
-            }
-
-            for (int i = 0; i < configLines.Length; i++)
-            {
-                int colonIndex = configLines[i].IndexOf(':');
-                int spaceIndex = configLines[i].IndexOf(' ');
-
-                if (configLines[i].Length != 0)
-                {
-                    if (colonIndex != -1)
-                    {
-                        string name = configLines[i].Substring(0, colonIndex);
-                        if (validConfigVars.Contains(name))
-                        {
-                            string value = "";
-                            if (spaceIndex != -1)
-                            {
-                                value = configLines[i].Substring(colonIndex + 2, configLines[i].Length - colonIndex - 2);
-                            }
-                            else
-                            {
-                                value = configLines[i].Substring(colonIndex + 1, configLines[i].Length - colonIndex - 1);
-                            }
-                            configVars.FirstOrDefault(c => c.name == name).value = value;
-
-                            LogEvent("Loading config variable " + name + " with value " + value);
-                        }
-                        else
-                        {
-                            LogEvent("Skipping config line [" + (i + 1) + "] because it does not contain a valid variable name", true);
-                        }
-                    }
-                    else
-                    {
-                        LogEvent("Skipping config line [" + (i + 1) + "] because it does not contain a valid separator", true);
-                    }
-                }
-                else
-                {
-                    LogEvent("Skipping config line [" + (i + 1) + "] because it is empty", true);
-                }
-            }
-
-            for (int i = 0; i < configVars.Count; i++)
-            {
-                if (configVars[i].value == null || configVars[i].value == "")
-                {
-                    LogEvent("Config variable [" + configVars[i].name + "] has not been given a value in the config", true);
-                }
-            }
-
-            string WolframAlphaAppId = configVars.FirstOrDefault(c => c.name == "WolframAlphaAppId").value;
-            string StartingTokens = configVars.FirstOrDefault(c => c.name == "StartingTokens").value;
-            string GithubLink = configVars.FirstOrDefault(c => c.name == "GithubLink").value;
-            string TyperacerLink = configVars.FirstOrDefault(c => c.name == "TyperacerLink").value;
-            string AuthorUId = configVars.FirstOrDefault(c => c.name == "AuthorUId").value;
-            string AuthorUsername = configVars.FirstOrDefault(c => c.name == "AuthorUsername").value;
-            string BotToken = configVars.FirstOrDefault(c => c.name == "BotToken").value;
-            string PlayingMessage = configVars.FirstOrDefault(c => c.name == "PlayingMessage").value;
+            GetConfigValues();
 
             discord = new DiscordClient(x =>
             {
@@ -122,7 +53,7 @@ namespace ConsoleApp1
 
             discord.UsingCommands(x =>
             {
-                x.PrefixChar = '!';
+                x.PrefixChar = PrefixChar;
                 x.AllowMentionPrefix = true;
             });
 
@@ -223,7 +154,7 @@ Can only be used by users with administrator permissions on the server";
                     }
                     else if (Int32.TryParse(e.GetArg("NumberOfMessages"), out NumberOfMessages) || e.GetArg("NumberOfMessages") == "")
                     {
-                        if (e.User.ServerPermissions.Administrator == true)
+                        if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == AuthorUId)
                         {
                             Message[] messagesToDelete;
                             messagesToDelete = await e.Channel.DownloadMessages(NumberOfMessages + 1);
@@ -705,7 +636,7 @@ You must be an administrator on the server to use this command";
                     {
                         await e.Channel.SendMessage(desc);
                     }
-                    else if (e.User.ServerPermissions.Administrator == true)
+                    else if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == AuthorUId)
                     {
                         string FileAddress = baseFilePath + @"SlotMachine\PlayerList.txt";
                         var oldLines = File.ReadAllLines(FileAddress);
@@ -748,7 +679,7 @@ You must be an administrator on the server to use this command";
                     {
                         await e.Channel.SendMessage(desc);
                     }
-                    else if (e.User.ServerPermissions.Administrator == true)
+                    else if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == AuthorUId)
                     {
                         int spaceIndex = param.IndexOf(" ");
                         string userId = param.Substring(0, spaceIndex);
@@ -787,7 +718,7 @@ You must be an administrator on the server to use this command";
                     {
                         await e.Channel.SendMessage(desc);
                     }
-                    else if (e.User.ServerPermissions.Administrator == true)
+                    else if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == AuthorUId)
                     {
                         int spaceIndex = param.IndexOf(" ");
                         string userId = param.Substring(0, spaceIndex);
@@ -1617,6 +1548,36 @@ Now rolling **" + coinsToFlip + @"** coins:
                     }
                 });
 
+            //Admin only command so it isn't in the list
+            //commandList.Add("refreshconfig");
+            commands.CreateCommand("refreshconfig")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    LogCommand("refreshconfig", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
+
+                    string desc = @"**Description:**
+Refreshes all variables to the values set in the config. Useful if you want to change something, but don't want to restart the bot entirely
+
+**Arguments:**
+None
+
+**Restrictions:**
+You must be the bot owner to use this command";
+                    if (e.User.Id.ToString() == AuthorUId)
+                    {
+                        if (e.GetArg("param") == "help")
+                        {
+                            await e.Channel.SendMessage(desc);
+                        }
+                        else
+                        {
+                            GetConfigValues();
+                            await e.Channel.SendMessage("Config values successfully refreshed");
+                        }
+                    }
+                });
+
             //commandList.Add("typeracer");
             commands.CreateCommand("typeracer")
                 .Parameter("param", ParameterType.Unparsed)
@@ -1649,7 +1610,7 @@ None";
                 {
                     LogCommand("getmessages", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
 
-                    if (e.User.Id == uint.Parse(AuthorUId))
+                    if (e.User.Id.ToString() == AuthorUId)
                     {
                         int numOfMessages = Int32.Parse(e.GetArg("param"));
                         //deletes the message containing the command to download from the channel
@@ -1681,7 +1642,7 @@ None";
                 {
                     LogCommand("help", e.User.Name, e.Channel.Name, e.Server.Name, "NULL");
 
-                    string list = @"**Available commands** (prefix with '!'):
+                    string list = @"**Available commands** (prefix with '" + PrefixChar + @"'):
 ";
                     commandList.Sort();
                     for (int i = 0; i < commandList.ToArray().Length; i++)
@@ -1690,7 +1651,7 @@ None";
 ";
                     }
                     list += @"To get help with a specific command, type
-`!commandname help`
+`" + PrefixChar + @"commandname help`
 ";
                     list += "If you need other help, or would like to report a bug, please message " + AuthorUsername;
                     await e.Channel.SendMessage(list);
@@ -1710,6 +1671,92 @@ None";
                 await discord.Connect(BotToken, TokenType.Bot);
                 discord.SetGame(PlayingMessage);
             });
+        }
+
+        private void GetConfigValues()
+        {
+            string logPath = baseFilePath + "Log.txt";
+            var configLines = File.ReadAllLines(baseFilePath + "Config.txt");
+
+            List<ConfigVar> configVars = new List<ConfigVar>();
+
+            string[] validConfigVars =
+            {
+                "WolframAlphaAppId",
+                "StartingTokens",
+                "GithubLink",
+                "TyperacerLink",
+                "AuthorUId",
+                "AuthorUsername",
+                "BotToken",
+                "PlayingMessage",
+                "PrefixChar"
+            };
+
+            for (int i = 0; i < validConfigVars.Length; i++)
+            {
+                configVars.Add(new ConfigVar());
+                configVars[i].name = validConfigVars[i];
+            }
+
+            for (int i = 0; i < configLines.Length; i++)
+            {
+                int colonIndex = configLines[i].IndexOf(':');
+                int spaceIndex = configLines[i].IndexOf(' ');
+
+                if (configLines[i].Length != 0)
+                {
+                    if (colonIndex != -1)
+                    {
+                        string name = configLines[i].Substring(0, colonIndex);
+                        if (validConfigVars.Contains(name))
+                        {
+                            string value = "";
+                            if (spaceIndex != -1)
+                            {
+                                value = configLines[i].Substring(colonIndex + 2, configLines[i].Length - colonIndex - 2);
+                            }
+                            else
+                            {
+                                value = configLines[i].Substring(colonIndex + 1, configLines[i].Length - colonIndex - 1);
+                            }
+                            configVars.FirstOrDefault(c => c.name == name).value = value;
+
+                            LogEvent("Loading config variable " + name + " with value " + value);
+                        }
+                        else
+                        {
+                            LogEvent("Skipping config line [" + (i + 1) + "] because it does not contain a valid variable name", true);
+                        }
+                    }
+                    else
+                    {
+                        LogEvent("Skipping config line [" + (i + 1) + "] because it does not contain a valid separator", true);
+                    }
+                }
+                else
+                {
+                    LogEvent("Skipping config line [" + (i + 1) + "] because it is empty", true);
+                }
+            }
+
+            for (int i = 0; i < configVars.Count; i++)
+            {
+                if (configVars[i].value == null || configVars[i].value == "")
+                {
+                    LogEvent("Config variable [" + configVars[i].name + "] has not been given a value in the config", true);
+                }
+            }
+
+            WolframAlphaAppId = configVars.FirstOrDefault(c => c.name == "WolframAlphaAppId").value;
+            StartingTokens = configVars.FirstOrDefault(c => c.name == "StartingTokens").value;
+            GithubLink = configVars.FirstOrDefault(c => c.name == "GithubLink").value;
+            TyperacerLink = configVars.FirstOrDefault(c => c.name == "TyperacerLink").value;
+            AuthorUId = configVars.FirstOrDefault(c => c.name == "AuthorUId").value;
+            AuthorUsername = configVars.FirstOrDefault(c => c.name == "AuthorUsername").value;
+            BotToken = configVars.FirstOrDefault(c => c.name == "BotToken").value;
+            PlayingMessage = configVars.FirstOrDefault(c => c.name == "PlayingMessage").value;
+            PrefixChar = Char.Parse(configVars.FirstOrDefault(c => c.name == "PrefixChar").value);
         }
 
         private void LogEvent(string message, bool isError = false)
