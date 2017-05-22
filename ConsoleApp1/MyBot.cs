@@ -1,5 +1,4 @@
-﻿//certain using directives have been commented out because they are part of a feature that is currently non functional and that I don't feel like fixing
-using System;
+﻿using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,13 +9,6 @@ using System.Net;
 using Discord;
 using Discord.Commands;
 using Discord.Audio;
-//using NAudio;
-//using NAudio.Wave;
-//using NAudio.CoreAudioApi;
-//using VideoLibrary;
-//using EmergenceGuardian;
-//using System.Diagnostics;
-//using YoutubeExtractor;
 
 namespace ConsoleApp1
 {
@@ -29,7 +21,7 @@ namespace ConsoleApp1
     class MyBot
     {
         DiscordClient discord;
-        string baseFilePath = @"C:\users\Seth Dolin\Desktop\PhysicsBot\";
+        string baseFilePath = @".\BaconBot\";
 
         private static string WolframAlphaAppId { get; set; }
         private static string StartingTokens { get; set; }
