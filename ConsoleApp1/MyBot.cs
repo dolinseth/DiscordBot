@@ -35,8 +35,8 @@ namespace ConsoleApp1
         private static string StartingTokens { get; set; }
         private static string GithubLink { get; set; }
         private static string TyperacerLink { get; set; }
-        private static string AuthorUId { get; set; }
-        private static string AuthorUsername { get; set; }
+        private static string OwnerUId { get; set; }
+        private static string OwnerUsername { get; set; }
         private static string BotToken { get; set; }
         private static string PlayingMessage { get; set; }
         private static char PrefixChar { get; set; }
@@ -63,43 +63,17 @@ namespace ConsoleApp1
             });
 
             List<String> commandList = new List<String>();
+            List<String> AdminCommandList = new List<string>();
 
             var commands = discord.GetService<CommandService>();
             Random rnd = new Random();
 
-            //deprecated so it isn't in the list
-            //commandList.Add("whiteboard");
-            commands.CreateCommand("whiteboard")
-                .Parameter("param", ParameterType.Unparsed)
-                .Do(async (e) =>
-                {
-                    LogCommand("whiteboard", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
-
-                    string desc = @"**Description:**
-Sends the link to the whiteboard web app
-
-**Arguments:**
-None
-
-**Restrictions:**
-None";
-                    if (e.GetArg("param").ToLower() == "help")
-                    {
-                        await e.Channel.SendMessage(desc);
-                    }
-                    else
-                    {
-                        await e.Channel.SendMessage("The whiteboard app can be found at https://awwapp.com/");
-                    }
-                });
-
-            //deprecated so it isn't in the list
-            //commandList.Add("verify");
-            commands.CreateCommand("verify")
+            commandList.Add("nickname");
+            commands.CreateCommand("nickname")
                 .Parameter("RequestedName", ParameterType.Unparsed)
                 .Do(async (e) =>
                 {
-                    LogCommand("verify", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("RequestedName"));
+                    LogCommand("nickname", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("RequestedName"));
 
                     string desc = @"**Description:**
 Sets the user's server wide nickname to the requested name
@@ -108,26 +82,20 @@ Sets the user's server wide nickname to the requested name
 `RequestedName` - The name to be set as the user's nickname
 
 **Restrictions:**
-Can only be used in the verification channel";
+None";
                     if (e.GetArg("RequestedName").ToLower() == "help")
                     {
                         await e.Channel.SendMessage(desc);
                     }
                     else
                     {
-                        if (e.Channel.Name == "get_verified")
-                        {
-                            await e.User.Edit(null, null, null, null, $"{e.GetArg("RequestedName")}");
-                        }
-                        else
-                        {
-                            await e.Channel.SendMessage("This is not the verification channel");
-                        }
+                        await e.User.Edit(null, null, null, null, $"{e.GetArg("RequestedName")}");
+                        await e.Channel.SendMessage("Done");
                     }
                 });
 
             //admin only command so it isn't in the list
-            //commandList.Add("purge");
+            AdminCommandList.Add("purge");
             commands.CreateCommand("purge")
                 .Parameter("NumberOfMessages", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -154,7 +122,7 @@ Can only be used by users with administrator permissions on the server";
                     }
                     else if (Int32.TryParse(e.GetArg("NumberOfMessages"), out NumberOfMessages) || e.GetArg("NumberOfMessages") == "")
                     {
-                        if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == AuthorUId)
+                        if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId)
                         {
                             Message[] messagesToDelete;
                             messagesToDelete = await e.Channel.DownloadMessages(NumberOfMessages + 1);
@@ -162,6 +130,7 @@ Can only be used by users with administrator permissions on the server";
                         }
                         else
                         {
+                            LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("NumberOfMessages"), "permission");
                             await e.Channel.SendMessage("You do not have permission to use this command");
                         }
                     }
@@ -617,7 +586,7 @@ None";
                 });
 
             //admin only command so it isn't in the list
-            //commandList.Add("adduser");
+            AdminCommandList.Add("adduser");
             commands.CreateCommand("adduser")
                 .Parameter("UserId", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -636,7 +605,7 @@ You must be an administrator on the server to use this command";
                     {
                         await e.Channel.SendMessage(desc);
                     }
-                    else if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == AuthorUId)
+                    else if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId)
                     {
                         string FileAddress = baseFilePath + @"SlotMachine\PlayerList.txt";
                         var oldLines = File.ReadAllLines(FileAddress);
@@ -653,12 +622,13 @@ You must be an administrator on the server to use this command";
                     }
                     else
                     {
+                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("UserId"), "permission");
                         await e.Channel.SendMessage("You do not have permission to use this command");
                     }
                 });
 
             //admin only command so it isn't in the list
-            //commandList.Add("bonus");
+            AdminCommandList.Add("bonus");
             commands.CreateCommand("bonus")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -679,7 +649,7 @@ You must be an administrator on the server to use this command";
                     {
                         await e.Channel.SendMessage(desc);
                     }
-                    else if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == AuthorUId)
+                    else if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId)
                     {
                         int spaceIndex = param.IndexOf(" ");
                         string userId = param.Substring(0, spaceIndex);
@@ -692,12 +662,13 @@ You must be an administrator on the server to use this command";
                     }
                     else
                     {
+                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, param, "permission");
                         await e.Channel.SendMessage("You do not have permission to use this command");
                     }
                 });
 
             //admin only command so it isn't in the list
-            //commandList.Add("take");
+            AdminCommandList.Add("take");
             commands.CreateCommand("take")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -718,7 +689,7 @@ You must be an administrator on the server to use this command";
                     {
                         await e.Channel.SendMessage(desc);
                     }
-                    else if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == AuthorUId)
+                    else if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId)
                     {
                         int spaceIndex = param.IndexOf(" ");
                         string userId = param.Substring(0, spaceIndex);
@@ -731,6 +702,7 @@ You must be an administrator on the server to use this command";
                     }
                     else
                     {
+                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, param, "permission");
                         await e.Channel.SendMessage("You do not have permission to use this command");
                     }
                 });
@@ -942,17 +914,6 @@ None";
                     }
                 });
 
-            //deprecated because Discord developer tools allow you to get server id's easily
-            //commandList.Add("serverid");
-            commands.CreateCommand("serverid")
-                .Parameter("param", ParameterType.Unparsed)
-                .Do(async (e) =>
-                {
-                    LogCommand("serverid", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
-
-                    await e.Channel.SendMessage(e.Server.Id.ToString());
-                });
-
             commandList.Add("lucas");
             commands.CreateCommand("lucas")
                 .Parameter("termNumber", ParameterType.Unparsed)
@@ -1111,7 +1072,7 @@ It is recommended that you create the game in a channel separate to where you in
                         }
                         if (action == "create")
                         {
-                            if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == AuthorUId)
+                            if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId)
                             {
                                 await e.Channel.DeleteMessages(await e.Channel.DownloadMessages(1));
 
@@ -1549,7 +1510,7 @@ Now rolling **" + coinsToFlip + @"** coins:
                 });
 
             //Admin only command so it isn't in the list
-            //commandList.Add("refreshconfig");
+            AdminCommandList.Add("refreshconfig");
             commands.CreateCommand("refreshconfig")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -1564,7 +1525,7 @@ None
 
 **Restrictions:**
 You must be the bot owner to use this command";
-                    if (e.User.Id.ToString() == AuthorUId)
+                    if (e.User.Id.ToString() == OwnerUId)
                     {
                         if (e.GetArg("param") == "help")
                         {
@@ -1575,6 +1536,11 @@ You must be the bot owner to use this command";
                             GetConfigValues();
                             await e.Channel.SendMessage("Config values successfully refreshed");
                         }
+                    }
+                    else
+                    {
+                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"), "permission");
+                        await e.Channel.SendMessage("You do not have permission to use this command");
                     }
                 });
 
@@ -1603,40 +1569,6 @@ None";
                     }
                 });
 
-            //Currently broken for message amounts over 100. Can't seem to get it to loop properly
-            commands.CreateCommand("getmessages")
-                .Parameter("param", ParameterType.Unparsed)
-                .Do(async (e) =>
-                {
-                    LogCommand("getmessages", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
-
-                    if (e.User.Id.ToString() == AuthorUId)
-                    {
-                        int numOfMessages = Int32.Parse(e.GetArg("param"));
-                        //deletes the message containing the command to download from the channel
-                        Message[] messages = new Message[numOfMessages];
-                        var message = await e.Channel.DownloadMessages(2);
-                        messages[1] = message[1];
-                        await e.Channel.DeleteMessages(message);
-                        string[] lines = new string[numOfMessages];
-
-                        for (int i = 0; i < (numOfMessages / 100); i++)
-                        {
-                            Console.WriteLine(messages[(messages[0] == null) ? (i * 100 - 1) : (1)].RawText);
-                            messages.Concat(await e.Channel.DownloadMessages(100, messages[(messages[0] == null) ? (i * 100 - 1) : (1)].Id));
-                        }
-
-                        for (int j = 0; j < numOfMessages; j++)
-                        {
-                            lines[j] = messages[j].RawText;
-                        }
-                        string fileAddress = @"C:\users\Seth Dolin\Desktop\DiscordNeuralNetwork\Messages.txt";
-
-
-                        File.WriteAllLines(fileAddress, lines);
-                    }
-                });
-
             commands.CreateCommand("help")
                 .Do(async (e) =>
                 {
@@ -1653,8 +1585,38 @@ None";
                     list += @"To get help with a specific command, type
 `" + PrefixChar + @"commandname help`
 ";
-                    list += "If you need other help, or would like to report a bug, please message " + AuthorUsername;
+                    list += "If you need other help, or would like to report a bug, please message " + OwnerUsername;
                     await e.Channel.SendMessage(list);
+                });
+
+            commands.CreateCommand("adminhelp")
+                .Do(async (e) =>
+                {
+                    if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId)
+                    {
+
+                        LogCommand("adminhelp", e.User.Name, e.Channel.Name, e.Server.Name, "NULL");
+
+                        AdminCommandList.AddRange(commandList);
+                        string list = @"**Available commands** (prefix with '" + PrefixChar + @"'):
+";
+                        AdminCommandList.Sort();
+                        for (int i = 0; i < AdminCommandList.ToArray().Length; i++)
+                        {
+                            list += "`" + AdminCommandList[i] + @"`
+";
+                        }
+                        list += @"To get help with a specific command, type
+`" + PrefixChar + @"commandname help`
+";
+                        list += "If you need other help, or would like to report a bug, please message " + OwnerUsername;
+                        await e.Channel.SendMessage(list);
+                    }
+                    else
+                    {
+                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, "NULL", "permission");
+                        await e.Channel.SendMessage("You do not have permission to use this command");
+                    }
                 });
 
             //command for testing stuff
@@ -1686,8 +1648,8 @@ None";
                 "StartingTokens",
                 "GithubLink",
                 "TyperacerLink",
-                "AuthorUId",
-                "AuthorUsername",
+                "OwnerUId",
+                "OwnerUsername",
                 "BotToken",
                 "PlayingMessage",
                 "PrefixChar"
@@ -1726,17 +1688,17 @@ None";
                         }
                         else
                         {
-                            LogEvent("Skipping config line [" + (i + 1) + "] because it does not contain a valid variable name", true);
+                            LogEventError("Skipping config line [" + (i + 1) + "] because it does not contain a valid variable name", "config");
                         }
                     }
                     else
                     {
-                        LogEvent("Skipping config line [" + (i + 1) + "] because it does not contain a valid separator", true);
+                        LogEventError("Skipping config line [" + (i + 1) + "] because it does not contain a valid separator", "config");
                     }
                 }
                 else
                 {
-                    LogEvent("Skipping config line [" + (i + 1) + "] because it is empty", true);
+                    LogEventError("Skipping config line [" + (i + 1) + "] because it is empty", "config");
                 }
             }
 
@@ -1744,7 +1706,7 @@ None";
             {
                 if (configVars[i].value == null || configVars[i].value == "")
                 {
-                    LogEvent("Config variable [" + configVars[i].name + "] has not been given a value in the config", true);
+                    LogEventError("Config variable [" + configVars[i].name + "] has not been given a value in the config", "config");
                 }
             }
 
@@ -1752,16 +1714,33 @@ None";
             StartingTokens = configVars.FirstOrDefault(c => c.name == "StartingTokens").value;
             GithubLink = configVars.FirstOrDefault(c => c.name == "GithubLink").value;
             TyperacerLink = configVars.FirstOrDefault(c => c.name == "TyperacerLink").value;
-            AuthorUId = configVars.FirstOrDefault(c => c.name == "AuthorUId").value;
-            AuthorUsername = configVars.FirstOrDefault(c => c.name == "AuthorUsername").value;
+            OwnerUId = configVars.FirstOrDefault(c => c.name == "OwnerUId").value;
+            OwnerUsername = configVars.FirstOrDefault(c => c.name == "OwnerUsername").value;
             BotToken = configVars.FirstOrDefault(c => c.name == "BotToken").value;
             PlayingMessage = configVars.FirstOrDefault(c => c.name == "PlayingMessage").value;
             PrefixChar = Char.Parse(configVars.FirstOrDefault(c => c.name == "PrefixChar").value);
         }
 
-        private void LogEvent(string message, bool isError = false)
+        private void LogEvent(string message)
         {
-            string log = DateTime.Now.ToString() + ": " + ((isError) ? ("~~ERROR~~ ") : ("")) + message;
+            string log = DateTime.Now.ToString() + ": " + message;
+            Console.WriteLine(log);
+            string fileAddress = baseFilePath + @"Log.txt";
+            var lines = File.ReadAllLines(fileAddress);
+            string[] newLines = new string[lines.Length + 1];
+            for (int i = 0; i < lines.Length; i++)
+            {
+                newLines[i] = lines[i];
+            }
+            newLines[lines.Length] = log;
+            File.WriteAllLines(fileAddress, newLines);
+        }
+
+        private void LogEventError(string message, string errorType)
+        {
+            string errorMessage = "";
+            errorMessage = "~~" + errorType.ToUpper() + "_ERROR~~ ";
+            string log = DateTime.Now.ToString() + ": " + errorMessage + message;
             Console.WriteLine(log);
             string fileAddress = baseFilePath + @"Log.txt";
             var lines = File.ReadAllLines(fileAddress);
@@ -1786,6 +1765,32 @@ None";
                 param = "NULL";
             }
             log = DateTime.Now.ToString() + ": Now executing command " + command + " for user " + username + " in channel " + channel + " in server " + server + " with parameter " + param;
+            Console.WriteLine(log);
+            string fileAddress = baseFilePath + @"Log.txt";
+            var lines = File.ReadAllLines(fileAddress);
+            string[] newLines = new string[lines.Length + 1];
+            for (int i = 0; i < lines.Length; i++)
+            {
+                newLines[i] = lines[i];
+            }
+            newLines[lines.Length] = log;
+            File.WriteAllLines(fileAddress, newLines);
+        }
+
+        private void LogCommandError(string command, string username, string channel, string server, string param, string errorType)
+        {
+            string log;
+            string errorMessage = "";
+            errorMessage = "~~" + errorType.ToUpper() + "_ERROR~~ ";
+            command = command.ToUpper();
+            username = username.ToUpper();
+            channel = channel.ToUpper();
+            server = server.ToUpper();
+            if (param == "" || param == null)
+            {
+                param = "NULL";
+            }
+            log = DateTime.Now.ToString() + ": " + errorMessage + "Halting execution of command " + command + " for user " + username + " in channel " + channel + " in server " + server + " with parameter " + param;
             Console.WriteLine(log);
             string fileAddress = baseFilePath + @"Log.txt";
             var lines = File.ReadAllLines(fileAddress);
