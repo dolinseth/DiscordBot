@@ -43,6 +43,7 @@ namespace ConsoleApp1
 
         public MyBot()
         {
+            LogEvent("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~STARTING BOT~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             GetConfigValues();
 
             discord = new DiscordClient(x =>
