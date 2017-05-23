@@ -32,6 +32,7 @@ namespace ConsoleApp1
         private static string BotToken { get; set; }
         private static string PlayingMessage { get; set; }
         private static char PrefixChar { get; set; }
+        private static double SlotWeight { get; set; }
 
         public MyBot()
         {
@@ -102,7 +103,8 @@ Purges the specified number of messages from the channel
 `NumberOfMessages` - The number of messages to be deleted, must be an integer. Defaults to 99 for rate limit reasons
 
 **Restrictions:**
-Can only be used by users with administrator permissions on the server";
+Can only be used by users with administrator permissions on the server
+`NumberOfMessages` must be less than or equal to 99 for rate limit reasons";
 
                     int NumberOfMessages = 0;
                     if (e.GetArg("NumberOfMessages") == "")
@@ -129,6 +131,7 @@ Can only be used by users with administrator permissions on the server";
                     }
                     else
                     {
+                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("NumberOfMessages"), "invalid_argument");
                         await e.Channel.SendMessage("That's not a valid number");
                     }
                 });
@@ -250,17 +253,11 @@ The payouts are listed below:";
                         else
                         {
                             //weighted random number generator to make payouts lower
-                            string fileAddress = baseFilePath + @"SlotMachine\weight.txt";
-                            double weight = double.Parse(File.ReadAllLines(fileAddress)[0]);
-                            //set in the file listed above, not here
-                            //higher values make it harder to get better rolls. 
-                            //1 is default
-
                             double[] weights = new double[8];
                             double maxWeight = 0.0;
                             for (int i = 0; i < 8; i++)
                             {
-                                weights[i] = (weight * (8 - i));
+                                weights[i] = (SlotWeight * (8 - i));
                                 maxWeight += weights[i];
                             }
 
@@ -279,10 +276,12 @@ The payouts are listed below:";
 
                             if (!File.ReadAllText(FileAddress).Contains(Id))
                             {
+                                LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("BetAmount"), "not_registered");
                                 await e.Channel.SendMessage("You are not registered in the token database. Please use `!register` to add yourself to the database");
                             }
                             else if (BetAmount > currentTokens)
                             {
+                                LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("BetAmount"), "not_enough_tokens");
                                 await e.Channel.SendMessage("You do not have enough tokens to perform this bet");
                             }
                             else
@@ -536,10 +535,6 @@ None";
                     {
                         await e.Channel.SendMessage("Your user id is " + e.User.Id);
                     }
-                    else
-                    {
-                        //need to figure out how to get user id of a user with a specific nickname and put it here
-                    }
                 });
 
             commandList.Add("register");
@@ -672,7 +667,7 @@ You must be an administrator on the server to use this command";
 Takes the specified amount of tokens from the specified user
 
 **Arguments:**
-`UserId` - The id of the user to be given the bonus tokens. A user's Id can be found by using !id
+`UserId` - The id of the user to be given the bonus tokens. A user's Id can be found by using !id or with Discord Developer Tools
 `Tokens` - The amount of tokens to be taken from the user
 
 **Restrictions:**
@@ -756,6 +751,7 @@ You must possess the amount of tokens that you wish to give";
                         ulong tokens = ulong.Parse(param.Substring(spaceIndex, param.Length - spaceIndex));
                         if (GetTokens(e.User.Id.ToString()) < tokens)
                         {
+                            LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, param, "not_enough_tokens");
                             await e.Channel.SendMessage("You do not have enough tokens to perform this action");
                         }
                         else
@@ -902,7 +898,8 @@ None";
                         }
                         else
                         {
-                            await e.Channel.SendMessage("One or more arguments are in the incorrect format. Please try again");
+                            LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, arg, "invalid_argument");
+                            await e.Channel.SendMessage("Invalid action argument. Please try again");
                         }
                     }
                 });
@@ -926,6 +923,11 @@ Due to operator overflow errors in the calculation of the sequence, `TermNumber`
                     if (arg == "help")
                     {
                         await e.Channel.SendMessage(desc);
+                    }
+                    else if (Int32.Parse(arg) >= 3225)
+                    {
+                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, arg, "argument_out_of_range");
+                        await e.Channel.SendMessage("Term number must be less than 3225");
                     }
                     else
                     {
@@ -953,6 +955,10 @@ Due to operator overflow errors in the calculation of the sequence, `TermNumber`
                     if (arg == "help")
                     {
                         await e.Channel.SendMessage(desc);
+                    }
+                    else if (Int32.Parse(arg) >= 3225) {
+                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, arg, "argument_out_of_range");
+                        await e.Channel.SendMessage("Term number must be less than 3225");
                     }
                     else
                     {
@@ -1009,6 +1015,7 @@ You must possess an amount of tokens equal to or greater than the price of the o
                             ulong price = ulong.Parse(lines[(itemIndex * 2) - 1]);
                             if (currentTokens < price)
                             {
+                                LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, arg, "not_enough_tokens");
                                 await e.Channel.SendMessage("You do not have enough tokens to purchase this item.");
                             }
                             else
@@ -1024,6 +1031,7 @@ You must possess an amount of tokens equal to or greater than the price of the o
                 });
 
             commandList.Add("hangman");
+            AdminCommandList.Add("hangman create");
             commands.CreateCommand("hangman")
                 .Parameter("param", ParameterType.Unparsed)
                 .Do(async (e) =>
@@ -1075,6 +1083,7 @@ It is recommended that you create the game in a channel separate to where you in
                             }
                             else
                             {
+                                LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, arg, "permission");
                                 await e.Channel.SendMessage("You do not have permission to use this command.");
                             }
                         }
@@ -1590,8 +1599,8 @@ None";
 
                         LogCommand("adminhelp", e.User.Name, e.Channel.Name, e.Server.Name, "NULL");
 
-                        AdminCommandList.AddRange(commandList);
                         string list = @"**Available commands** (prefix with '" + PrefixChar + @"'):
+Note: All commands listed here are administrator only
 ";
                         AdminCommandList.Sort();
                         for (int i = 0; i < AdminCommandList.ToArray().Length; i++)
@@ -1645,7 +1654,8 @@ None";
                 "OwnerUsername",
                 "BotToken",
                 "PlayingMessage",
-                "PrefixChar"
+                "PrefixChar",
+                "SlotWeight"
             };
 
             for (int i = 0; i < validConfigVars.Length; i++)
@@ -1712,6 +1722,7 @@ None";
             BotToken = configVars.FirstOrDefault(c => c.name == "BotToken").value;
             PlayingMessage = configVars.FirstOrDefault(c => c.name == "PlayingMessage").value;
             PrefixChar = Char.Parse(configVars.FirstOrDefault(c => c.name == "PrefixChar").value);
+            SlotWeight = Double.Parse(configVars.FirstOrDefault(c => c.name == "SlotWeight").value);
         }
 
         private void LogEvent(string message)
