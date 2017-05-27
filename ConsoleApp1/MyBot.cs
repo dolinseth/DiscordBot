@@ -123,6 +123,41 @@ You must be the bot owner to use this command";
                     }
                 });
 
+            AdminCommandList.Add("shutdown");
+            commands.CreateCommand("shutdown")
+                .Parameter("param", ParameterType.Unparsed)
+                .Alias("stop")
+                .Do(async (e) =>
+                {
+                    LogCommand("shutdown", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
+
+                    string desc = @"**Description:**
+Shuts down the bot
+
+**Arguments:**
+None
+
+**Restrictions:**
+You must be the bot owner to use this command";
+                    if (e.User.Id.ToString() == OwnerUId)
+                    {
+                        if (e.GetArg("param") == "help")
+                        {
+                            await e.Channel.SendMessage(desc);
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage("Now shutting down...");
+                            Environment.Exit(0);
+                        }
+                    }
+                    else
+                    {
+                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"), "permission");
+                        await e.Channel.SendMessage("You do not have permission to use this command");
+                    }
+                });
+
             commands.CreateCommand("help")
                 .Do(async (e) =>
                 {
