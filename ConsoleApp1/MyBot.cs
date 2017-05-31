@@ -37,6 +37,10 @@ namespace ConsoleApp1
         private static string AdminCommands { get; set; }
         private static List<string> AdminCommandList { get; set; }
         private static List<string> CommandList { get; set; }
+        private static string TrustedUserIds { get; set; }
+        private static string MinecraftBatAddress { get; set; }
+        private static string GmodBatAddress { get; set; }
+        private static string PublicIp { get; set; }
 
         public MyBot()
         {
@@ -66,6 +70,7 @@ namespace ConsoleApp1
             var commands = discord.GetService<CommandService>();
             Random rnd = new Random();
 
+            //normal commands go here
             AddCommNickname();
             AddCommPurge();
             AddCommMath();
@@ -89,6 +94,55 @@ namespace ConsoleApp1
             AddCommCoin();
             AddCommTyperacer();
 
+            //special commands such as those that are owner only go here
+            AdminCommandList.Add("startserver");
+            commands.CreateCommand("startserver")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    LogCommand("startserver", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
+
+                    string desc = @"**Description:**
+Starts one of the installed game servers and returns the public IP address that should be used to connect to the aforementioned server
+
+**Arguments:**
+`ServerName` - The name of the server that you wish to start
+
+**Restrictions:**
+You must be the bot owner to use this command";
+                    if (e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString()))
+                    {
+                        if (e.GetArg("param") == "help")
+                        {
+                            await e.Channel.SendMessage(desc);
+                        }
+                        else
+                        {
+                            string gameName = e.GetArg("param").ToLower();
+                            if (gameName == "minecraft" || gameName == "mc")
+                            {
+                                System.Diagnostics.Process.Start(MinecraftBatAddress);
+                                await e.Channel.SendMessage("Server started. To connect, use IP address: " + PublicIp);
+                            }
+                            else if (gameName == "garrys mod" || gameName == "gmod" || gameName == "garry's mod")
+                            {
+                                System.Diagnostics.Process.Start(GmodBatAddress);
+                                await e.Channel.SendMessage("Server started. To connect, use IP address: " + PublicIp);
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage("Unrecognized game/server name. Please try again");
+                                LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"), "invalid_argument");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"), "permission");
+                        await e.Channel.SendMessage("You do not have permission to use this command");
+                    }
+                });
+
             AdminCommandList.Add("refreshconfig");
             commands.CreateCommand("refreshconfig")
                 .Parameter("param", ParameterType.Unparsed)
@@ -104,7 +158,7 @@ None
 
 **Restrictions:**
 You must be the bot owner to use this command";
-                    if (e.User.Id.ToString() == OwnerUId)
+                    if (e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString()))
                     {
                         if (e.GetArg("param") == "help")
                         {
@@ -139,7 +193,7 @@ None
 
 **Restrictions:**
 You must be the bot owner to use this command";
-                    if (e.User.Id.ToString() == OwnerUId)
+                    if (e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString()))
                     {
                         if (e.GetArg("param") == "help")
                         {
@@ -181,7 +235,7 @@ You must be the bot owner to use this command";
             commands.CreateCommand("adminhelp")
                 .Do(async (e) =>
                 {
-                    if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId)
+                    if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString()))
                     {
 
                         LogCommand("adminhelp", e.User.Name, e.Channel.Name, e.Server.Name, "NULL");
@@ -257,7 +311,7 @@ Sets the user's server wide nickname to the requested name
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         await e.User.Edit(null, null, null, null, $"{e.GetArg("RequestedName")}");
                                         await e.Channel.SendMessage("Done");
@@ -315,7 +369,7 @@ Purges the specified number of messages from the channel
                                 }
                                 else if (Int32.TryParse(e.GetArg("NumberOfMessages"), out NumberOfMessages) || e.GetArg("NumberOfMessages") == "")
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         Message[] messagesToDelete;
                                         messagesToDelete = await e.Channel.DownloadMessages(NumberOfMessages + 1);
@@ -379,7 +433,7 @@ Queries Wolfram Alpha with the given parameter and returns the response as a .gi
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         string FormattedInput = SoftwareKobo.Net.WebUtility.UrlEncode($"{e.GetArg("RawInput")}");
                                         string url = "https://api.wolframalpha.com/v1/simple?input=" + FormattedInput + "&appid=" + WolframAlphaAppId;
@@ -441,7 +495,7 @@ None
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         if (rnd.Next(1, 7) == 6)
                                         {
@@ -508,7 +562,7 @@ The payouts are listed below:";
                                     await e.Channel.SendMessage(desc);
                                     await e.Channel.SendFile(baseFilePath + @"SlotMachine\Payouts.png");
                                 }
-                                else if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                else if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                 {
                                     if (ulong.TryParse(e.GetArg("BetAmount"), out BetAmount) || e.GetArg("BetAmount") == "max")
                                     {
@@ -824,7 +878,7 @@ None
                                 {
                                     await e.Channel.SendMessage(desc);
                                 }
-                                else if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                else if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                 {
                                     if (e.GetArg("param") == "")
                                     {
@@ -876,7 +930,7 @@ None
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         string FileAddress = baseFilePath + @"SlotMachine\PlayerList.txt";
                                         var oldLines = File.ReadAllLines(FileAddress);
@@ -935,7 +989,7 @@ Adds a user to the token database
                                 {
                                     await e.Channel.SendMessage(desc);
                                 }
-                                else if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                else if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                 {
                                     string FileAddress = baseFilePath + @"SlotMachine\PlayerList.txt";
                                     var oldLines = File.ReadAllLines(FileAddress);
@@ -995,7 +1049,7 @@ Gives the specified amount of bonus tokens to the specified user
                                 {
                                     await e.Channel.SendMessage(desc);
                                 }
-                                else if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                else if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                 {
                                     int spaceIndex = param.IndexOf(" ");
                                     string userId = param.Substring(0, spaceIndex);
@@ -1051,7 +1105,7 @@ Takes the specified amount of tokens from the specified user
                                 {
                                     await e.Channel.SendMessage(desc);
                                 }
-                                else if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                else if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                 {
                                     int spaceIndex = param.IndexOf(" ");
                                     string userId = param.Substring(0, spaceIndex);
@@ -1107,7 +1161,7 @@ None
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         ulong tokens = GetTokens(e.User.Id.ToString());
                                         await e.Channel.SendMessage("You have " + string.Format("{0:n0}", tokens) + " tokens");
@@ -1161,7 +1215,7 @@ You must possess the amount of tokens that you wish to give
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         int spaceIndex = param.IndexOf(" ");
                                         string receiveId = param.Substring(0, spaceIndex);
@@ -1232,7 +1286,7 @@ ASCII chess. Doesn't get much more complicated than that
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         int spaceIndex1 = GetNthIndex(arg, ' ', 1);
                                         int spaceIndex2 = GetNthIndex(arg, ' ', 2);
@@ -1391,7 +1445,7 @@ Due to operator overflow errors in the calculation of the sequence, `TermNumber`
                                 {
                                     await e.Channel.SendMessage(desc);
                                 }
-                                if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                 {
                                     if (Int32.Parse(arg) >= 3225)
                                     {
@@ -1449,7 +1503,7 @@ Due to operator overflow errors in the calculation of the sequence, `TermNumber`
                                 {
                                     await e.Channel.SendMessage(desc);
                                 }
-                                if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                 {
                                     if (Int32.Parse(arg) >= 3225)
                                     {
@@ -1511,7 +1565,7 @@ You must possess an amount of tokens equal to or greater than the price of the o
                                 {
                                     await e.Channel.SendMessage(desc);
                                 }
-                                if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                 {
                                     if (arg == "prices" || arg == null)
                                     {
@@ -1602,7 +1656,7 @@ It is recommended that you create the game in a channel separate to where you in
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         string sId = e.Server.Id.ToString();
                                         int spaceIndex1 = GetNthIndex(arg, ' ', 1);
@@ -1619,7 +1673,7 @@ It is recommended that you create the game in a channel separate to where you in
                                         }
                                         if (action == "create")
                                         {
-                                            if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId)
+                                            if (e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString()))
                                             {
                                                 await e.Channel.DeleteMessages(await e.Channel.DownloadMessages(1));
 
@@ -1825,7 +1879,7 @@ ASCII checkers. Doesn't get much more complicated than that
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         int spaceIndex1 = GetNthIndex(arg, ' ', 1);
                                         int spaceIndex2 = GetNthIndex(arg, ' ', 2);
@@ -1935,7 +1989,7 @@ None
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         await e.Channel.SendMessage("The github for this bot can be found here: " + GithubLink);
                                     }
@@ -1991,7 +2045,7 @@ Rolls the specified number and type of dice, and returns both the individual rol
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         int spaceIndex = arg.IndexOf(' ');
                                         bool isVerbose = false;
@@ -2085,7 +2139,7 @@ Flips the specified number of coins and returns the results of each flip, as wel
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         int spaceIndex = arg.IndexOf(' ');
                                         Console.WriteLine("spaceIndex = " + spaceIndex);
@@ -2201,7 +2255,7 @@ None
                                 }
                                 else
                                 {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId) || !isAdminOnly)
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
                                     {
                                         await e.Channel.SendMessage(TyperacerLink);
                                     }
@@ -2237,7 +2291,11 @@ None
                 "PrefixChar",
                 "SlotWeight",
                 "ExcludedCommands",
-                "AdminCommands"
+                "AdminCommands",
+                "TrustedUserIds",
+                "MinecraftBatAddress",
+                "GmodBatAddress",
+                "PublicIp"
             };
 
             for (int i = 0; i < validConfigVars.Length; i++)
@@ -2307,6 +2365,10 @@ None
             SlotWeight = Double.Parse(configVars.FirstOrDefault(c => c.name == "SlotWeight").value);
             ExcludedCommands = configVars.FirstOrDefault(c => c.name == "ExcludedCommands").value.ToLower();
             AdminCommands = configVars.FirstOrDefault(c => c.name == "AdminCommands").value.ToLower();
+            TrustedUserIds = configVars.FirstOrDefault(c => c.name == "TrustedUserIds").value;
+            MinecraftBatAddress = configVars.FirstOrDefault(c => c.name == "MinecraftBatAddress").value;
+            GmodBatAddress = configVars.FirstOrDefault(c => c.name == "GmodBatAddress").value;
+            PublicIp = configVars.FirstOrDefault(c => c.name == "PublicIp").value;
         }
 
         private void LogEvent(string message)
