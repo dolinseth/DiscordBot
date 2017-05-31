@@ -2305,8 +2305,8 @@ None
             PlayingMessage = configVars.FirstOrDefault(c => c.name == "PlayingMessage").value;
             PrefixChar = Char.Parse(configVars.FirstOrDefault(c => c.name == "PrefixChar").value);
             SlotWeight = Double.Parse(configVars.FirstOrDefault(c => c.name == "SlotWeight").value);
-            ExcludedCommands = configVars.FirstOrDefault(c => c.name == "ExcludedCommands").value;
-            AdminCommands = configVars.FirstOrDefault(c => c.name == "AdminCommands").value;
+            ExcludedCommands = configVars.FirstOrDefault(c => c.name == "ExcludedCommands").value.ToLower();
+            AdminCommands = configVars.FirstOrDefault(c => c.name == "AdminCommands").value.ToLower();
         }
 
         private void LogEvent(string message)
