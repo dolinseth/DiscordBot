@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Diagnostics;
 //using System.Text;
 //using System.Threading.Tasks;
 //using System.Web;
@@ -22,6 +23,7 @@ namespace ConsoleApp1
     {
         DiscordClient discord;
         string baseFilePath = @".\BaconBot\";
+        
 
         private static string WolframAlphaAppId { get; set; }
         private static string StartingTokens { get; set; }
@@ -44,7 +46,7 @@ namespace ConsoleApp1
 
         public MyBot()
         {
-            LogEvent("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~STARTING BOT~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            LogEvent("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~STARTING BOT~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             GetConfigValues();
 
             AdminCommandList = new List<string>();
@@ -89,12 +91,117 @@ namespace ConsoleApp1
             AddCommShop();
             AddCommHangman();
             AddCommCheckers();
-            AddCommGithub();
             AddCommRoll();
             AddCommCoin();
-            AddCommTyperacer();
+            //AddCommTyperacer();
+            //AddSimpleCommands();
 
             //special commands such as those that are owner only go here
+
+            Stopwatch sw = new Stopwatch();
+            CommandList.Add("stopwatch");
+            commands.CreateCommand("stopwatch")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    LogCommand("stopwatch", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
+
+                    string desc = @"**Description:**
+:Starts or stops a stopwatch
+
+**Arguments:**
+None
+
+**Restrictions:**
+None";
+                    if (e.GetArg("param") == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+                    else if (!sw.IsRunning)
+                    {
+                        sw.Start();
+                        await e.Channel.SendMessage("Stopwatch started");
+                    }
+                    else
+                    {
+                        sw.Stop();
+                        float ElapsedTime = ((float)sw.ElapsedMilliseconds / 1000);
+                        string time = "";
+                        Console.WriteLine(ElapsedTime);
+                        if (ElapsedTime >= 3600 * 24 * 7)
+                        {
+                            time += ElapsedTime % (3600 * 24 * 7) + " week" + ((ElapsedTime % (3600 * 24 * 7) == 1) ? (" ") : ("s "));
+                            ElapsedTime %= (3600 * 24 * 7);
+                        }
+                        if (ElapsedTime >= 3600 * 24)
+                        {
+                            time += ElapsedTime % (3600 * 24) + " day" + ((ElapsedTime % (3600 * 24) == 1) ? (" ") : ("s "));
+                            ElapsedTime %= (3600 * 24);
+                        }
+                        if (ElapsedTime >= 3600)
+                        {
+                            time += ElapsedTime % (3600) + " hour" + ((ElapsedTime % (3600) == 1) ? (" ") : ("s "));
+                            ElapsedTime %= (3600);
+                        }
+                        if (ElapsedTime >= 60)
+                        {
+                            time += ElapsedTime % (60) + " minute" + ((ElapsedTime % (60) == 1) ? (" ") : ("s "));
+                            ElapsedTime %= (60);
+                        }
+                        time += ElapsedTime + " seconds**";
+                        await e.Channel.SendMessage(@"Stopwatch stopped, time counted: **
+" + time);
+                    }
+                });
+
+            CommandList.Add("leet");
+
+            commands.CreateCommand("leet")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    LogCommand("leet", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
+
+                    string desc = @"**Description:**
+Translates strings to and from leet (1337) speak
+
+**Arguments:**
+`Message` - The message to be translated to or from leet speak
+
+**Restrictions:**
+None";
+                    if (e.GetArg("param") == "help")
+                    {
+                        await e.Channel.SendMessage(desc);
+                    }
+                    else
+                    {
+                        string original = e.GetArg("param");
+                        if (original.Contains("0") || original.Contains("1") || original.Contains("2") || original.Contains("3") || original.Contains("4") || original.Contains("5") || original.Contains("6") || original.Contains("7") || original.Contains("8") || original.Contains("9"))
+                        {
+                            original = original.Replace('0', 'o');
+                            original = original.Replace('1', 'i');
+                            original = original.Replace('3', 'e');
+                            original = original.Replace('4', 'a');
+                            original = original.Replace('5', 's');
+                            original = original.Replace('6', 'g');
+                            original = original.Replace('7', 't');
+                        }
+                        else
+                        {
+                            original = original.Replace('o', '0');
+                            original = original.Replace('i', '1');
+                            original = original.Replace('e', '3');
+                            original = original.Replace('a', '4');
+                            original = original.Replace('s', '5');
+                            original = original.Replace('g', '6');
+                            original = original.Replace('t', '7');
+                        }
+                        await e.Channel.SendMessage(original);
+                    }
+                });
+
             AdminCommandList.Add("startserver");
             commands.CreateCommand("startserver")
                 .Parameter("param", ParameterType.Unparsed)
@@ -119,20 +226,15 @@ You must be the bot owner to use this command";
                         else
                         {
                             string gameName = e.GetArg("param").ToLower();
-                            if (gameName == "minecraft" || gameName == "mc")
+                            try
                             {
-                                System.Diagnostics.Process.Start(MinecraftBatAddress);
-                                await e.Channel.SendMessage("Server started. To connect, use IP address: " + PublicIp);
+                                System.Diagnostics.Process.Start(baseFilePath + @"GameServers\" + gameName);
+                                await e.Channel.SendMessage("Started server for game `" + gameName + @"`
+Connect using IP " + PublicIp);
                             }
-                            else if (gameName == "garrys mod" || gameName == "gmod" || gameName == "garry's mod")
+                            catch
                             {
-                                System.Diagnostics.Process.Start(GmodBatAddress);
-                                await e.Channel.SendMessage("Server started. To connect, use IP address: " + PublicIp);
-                            }
-                            else
-                            {
-                                await e.Channel.SendMessage("Unrecognized game/server name. Please try again");
-                                LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"), "invalid_argument");
+                                await e.Channel.SendMessage("Failed to start server: No server with name `" + gameName + "` found");
                             }
                         }
                     }
@@ -202,7 +304,43 @@ You must be the bot owner to use this command";
                         else
                         {
                             await e.Channel.SendMessage("Now shutting down...");
-                            Environment.Exit(0);
+                            Environment.Exit(1);
+                        }
+                    }
+                    else
+                    {
+                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"), "permission");
+                        await e.Channel.SendMessage("You do not have permission to use this command");
+                    }
+                });
+
+            AdminCommandList.Add("restart");
+            commands.CreateCommand("restart")
+                .Parameter("param", ParameterType.Unparsed)
+                .Do(async (e) =>
+                {
+                    LogCommand("restart", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
+
+                    string desc = @"**Description:**
+Restarts the bot
+
+**Arguments:**
+None
+
+**Restrictions:**
+You must be the bot owner to use this command";
+                    if (e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString()))
+                    {
+                        if (e.GetArg("param") == "help")
+                        {
+                            await e.Channel.SendMessage(desc);
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage("Now restarting...");
+                            System.Threading.Thread.Sleep(5000);
+                            System.Diagnostics.Process.Start("ConsoleApp1.exe");
+                            Environment.Exit(1);
                         }
                     }
                     else
@@ -833,7 +971,7 @@ The payouts are listed below:";
                                     {
                                         await e.Channel.SendMessage("That is not a valid integer");
                                     }
-                        
+
                                 }
                                 else
                                 {
@@ -1233,7 +1371,7 @@ You must possess the amount of tokens that you wish to give
                                             await e.Channel.SendMessage("user " + e.User.Name + " in channel " + e.Channel.Name + " in server " + e.Server.Name + " has successfully given user with user id " + receiveId + " " + string.Format("{0:n0}", tokens) + @" tokens.
 " + e.User.Name + " now has " + string.Format("{0:n0}", GetTokens(giveId)) + @" tokens
 User with user id " + receiveId + " now has " + string.Format("{0:n0}", GetTokens(receiveId)) + " tokens");
-                                        }                                        
+                                        }
                                     }
                                     else
                                     {
@@ -1397,7 +1535,7 @@ ASCII chess. Doesn't get much more complicated than that
                                         {
                                             LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, arg, "invalid_argument");
                                             await e.Channel.SendMessage("Invalid action argument. Please try again");
-                                        }   
+                                        }
                                     }
                                     else
                                     {
@@ -1954,56 +2092,6 @@ ASCII checkers. Doesn't get much more complicated than that
                 }
             }
 
-            void AddCommGithub()
-            {
-                bool isAdminOnly = false;
-
-                if (!ExcludedCommands.Contains("githhub"))
-                {
-                    if (AdminCommands.Contains("github"))
-                    {
-                        isAdminOnly = true;
-                        AdminCommandList.Add("github");
-                    }
-                    else
-                    {
-                        CommandList.Add("github");
-
-                        commands.CreateCommand("github")
-                            .Parameter("param", ParameterType.Unparsed)
-                            .Do(async (e) =>
-                            {
-                                LogCommand("github", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
-                                string desc = @"**Description:**
-Sends the link to the github page for the bot
-
-**Arguments:**
-None
-
-**Restrictions:**
-" + ((isAdminOnly) ? ("You must be an administrator on the server to use this command") : ("None"));
-
-                                if (e.GetArg("param").ToLower() == "help")
-                                {
-                                    await e.Channel.SendMessage(desc);
-                                }
-                                else
-                                {
-                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
-                                    {
-                                        await e.Channel.SendMessage("The github for this bot can be found here: " + GithubLink);
-                                    }
-                                    else
-                                    {
-                                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"), "permission");
-                                        await e.Channel.SendMessage("You do not have permission to use this command");
-                                    }
-                                }
-                            });
-                    }
-                }
-            }
-
             void AddCommRoll()
             {
                 bool isAdminOnly = false;
@@ -2269,6 +2357,167 @@ None
                     }
                 }
             }
+
+            void AddCommLeet()
+            {
+                bool isAdminOnly = false;
+
+                if (!ExcludedCommands.Contains("leet"))
+                {
+                    if (AdminCommands.Contains("leet"))
+                    {
+                        isAdminOnly = true;
+                        AdminCommandList.Add("leet");
+                    }
+                    else
+                    {
+                        CommandList.Add("leet");
+
+                        commands.CreateCommand("leet")
+                            .Parameter("param", ParameterType.Unparsed)
+                            .Do(async (e) =>
+                            {
+                                LogCommand("leet", e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"));
+
+                                string desc = @"**Description:**
+Translates strings to and from leet (1337) speak
+
+**Arguments:**
+`Message` - The message to be translated to or from leet speak
+
+**Restrictions:**
+" + ((isAdminOnly) ? ("You must be an administrator on the server to use this command") : ("None"));
+                                if (e.GetArg("param") == "help")
+                                {
+                                    await e.Channel.SendMessage(desc);
+                                }
+                                else
+                                {
+                                    if ((e.User.ServerPermissions.Administrator || e.User.Id.ToString() == OwnerUId || TrustedUserIds.Contains(e.User.Id.ToString())) || !isAdminOnly)
+                                    {
+                                        string original = e.GetArg("param");
+                                        if (original.Contains("0") || original.Contains("1") || original.Contains("2") || original.Contains("3") || original.Contains("4") || original.Contains("5") || original.Contains("6") || original.Contains("7") || original.Contains("8") || original.Contains("9"))
+                                        {
+                                            original = original.Replace('0', 'o');
+                                            original = original.Replace('1', 'i');
+                                            original = original.Replace('3', 'e');
+                                            original = original.Replace('4', 'a');
+                                            original = original.Replace('5', 's');
+                                            original = original.Replace('6', 'g');
+                                            original = original.Replace('7', 't');
+                                        }
+                                        else
+                                        {
+                                            original = original.Replace('o', '0');
+                                            original = original.Replace('i', '1');
+                                            original = original.Replace('e', '3');
+                                            original = original.Replace('a', '4');
+                                            original = original.Replace('s', '5');
+                                            original = original.Replace('g', '6');
+                                            original = original.Replace('t', '7');
+                                        }
+                                        await e.Channel.SendMessage(original);
+                                    }
+                                    else
+                                    {
+                                        LogCommandError(e.Command.Text, e.User.Name, e.Channel.Name, e.Server.Name, e.GetArg("param"), "permission");
+                                        await e.Channel.SendMessage("You do not have permission to use this command");
+                                    }
+                                }
+                            });
+                    }
+                }
+            }
+            
+            /*void AddSimpleCommands()
+            {
+                string CommName = "eou";
+                string Message = "thoeun";
+                string[,] SimpleCommands = ParseCSV(baseFilePath + "SimpleCommands.csv");
+                for (int i = 1; i < SimpleCommands.GetLength(1); i++)
+                {
+                    Console.WriteLine("got to point 0");
+                    CommName = SimpleCommands[0, i];
+                    Message = SimpleCommands[1, i];
+                    Console.WriteLine("." + CommName + ".");
+                    Console.WriteLine("." + Message + ".");
+
+                    commands.CreateCommand(CommName)
+                        .Do(async (e) =>
+                        {
+                            LogCommand(e);
+                            Console.WriteLine(Message);
+                            await e.Channel.SendMessage(Message);
+                        });
+                }
+            }*/
+        }
+
+        private string[,] ParseCSV(string filepath)
+        {
+            var lines = File.ReadAllLines(filepath);
+            //declares the resultant array as being the same width as the top row, and the same height as the entire file
+            string[,] result = new string[IndexOfAll(lines[0], ',').Length + 1, lines.Length];
+            //i will be the vertical axis, and j the horizontal one
+            //correct formatting for saving to array is therefore [j,i]
+            string CurrentLine = "";
+            for (int i = 0; i < lines.Length; i++)
+            {
+                CurrentLine = lines[i];
+                int Index = 0;
+                int PlaceHolder = 0;
+                while (CurrentLine.Contains(','))
+                {
+                    Index = CurrentLine.IndexOf(',');
+                    result[PlaceHolder, i] = CurrentLine.Substring(0, Index);
+                    CurrentLine = CurrentLine.Substring(Index + 1);
+                    PlaceHolder++;
+                }
+            }
+
+            return result;
+        }
+
+        private void SaveCSV(string filepath, string[,] data)
+        {
+            string[] lines = new string[data.GetLength(1) + 1];
+            lines[0] = File.ReadAllLines(filepath)[0];
+            string line = "";
+            for (int i = 0; i < data.GetLength(1); i++)
+            {
+                for (int j = 0; j < data.GetLength(0); j++)
+                {
+                    if (data[j, i] != null)
+                    {
+                        line += data[j, i];
+                    }
+                    else
+                    {
+                        line += " ";
+                    }
+                    line += ",";
+                }
+
+                lines[i + 1] = line;
+                line = "";
+            }
+            File.WriteAllLines(filepath, lines);
+        }
+
+        private int[] IndexOfAll(string str, char c)
+        {
+            List<int> result = new List<int>();
+            int PlaceHolder = 0;
+            int index = 0;
+            while (str.Contains(c))
+            {
+                index = str.IndexOf(c);
+                result.Add(index + PlaceHolder);
+                str = str.Substring(index + 1);
+                PlaceHolder += str.IndexOf(c);
+            }
+
+            return result.ToArray();
         }
 
         private void GetConfigValues()
@@ -2414,6 +2663,35 @@ None
             {
                 param = "NULL";
             }
+            log = DateTime.Now.ToString() + ": Now executing command " + command + " for user " + username + " in channel " + channel + " in server " + server + " with parameter " + param;
+            Console.WriteLine(log);
+            string fileAddress = baseFilePath + @"Log.txt";
+            var lines = File.ReadAllLines(fileAddress);
+            string[] newLines = new string[lines.Length + 1];
+            for (int i = 0; i < lines.Length; i++)
+            {
+                newLines[i] = lines[i];
+            }
+            newLines[lines.Length] = log;
+            File.WriteAllLines(fileAddress, newLines);
+        }
+
+        private void LogCommand(CommandEventArgs e)
+        {
+            string log;
+            string command = e.Command.Text.ToUpper();
+            string username = e.User.Name.ToUpper();
+            string channel = e.Channel.Name.ToUpper();
+            string server = e.Server.Name.ToUpper();
+            string param = "";
+            /*if (e.GetArg("param") == "" || e.GetArg("param") == null)
+            {
+                param = "NULL";
+            }
+            else
+            {
+                param = e.GetArg("param");
+            }*/
             log = DateTime.Now.ToString() + ": Now executing command " + command + " for user " + username + " in channel " + channel + " in server " + server + " with parameter " + param;
             Console.WriteLine(log);
             string fileAddress = baseFilePath + @"Log.txt";
